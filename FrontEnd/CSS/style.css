@@ -217,6 +217,20 @@
     color: var(--pink-dark);
     margin-top:2px;
   }
+  .cat-title[contenteditable="true"] {
+  outline: none;
+  cursor: text;
+  transition: background-color 0.2s ease, border-radius 0.2s ease;
+  padding: 2px 6px;
+  display: inline-block;
+}
+
+.cat-title[contenteditable="true"]:hover,
+.cat-title[contenteditable="true"]:focus {
+  background-color: rgba(255, 255, 255, 0.4);
+  border-radius: 6px;
+}
+
 
   .id-row{
     margin-top:auto;

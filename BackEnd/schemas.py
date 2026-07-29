@@ -1,9 +1,9 @@
 from pydantic import BaseModel
 
 class CatCardBase(BaseModel):
+    id_number: str
     name: str
     title: str
-    id_number: str
     breed: str
     birth_date: str
     color: str
@@ -12,7 +12,5 @@ class CatCardBase(BaseModel):
     favorite_food: str
 
 class CatCardResponse(CatCardBase):
-    id: int
-
     class Config:
         from_attributes = True

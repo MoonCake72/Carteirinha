@@ -82,6 +82,58 @@ function setupNameEditing(cardId = 1) {
 
 // Inicializa quando a página carrega
 document.addEventListener("DOMContentLoaded", () => {
-  loadCardData(1);
-  setupNameEditing(1);
+  loadCardData("0007-GATA");
+  setupNameEditing("0007-GATA");
+});
+
+// Salva o novo cargo no banco via API
+async function saveCatTitle(cardId, newTitle) {
+  try {
+    const response = await fetch(`http://127.0.0.1:8000/api/card/${cardId}/title`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ title: newTitle }),
+    });
+
+    if (!response.ok) throw new Error("Erro ao salvar o cargo no banco");
+    console.log("Cargo atualizado com sucesso no PostgreSQL!");
+  } catch (error) {
+    console.error("Erro ao atualizar o cargo:", error);
+  }
+}
+
+// Configura a edição do campo de cargo
+function setupTitleEditing(cardId = "0007-GATA") {
+  const titleEl = document.querySelector(".cat-title");
+  if (!titleEl) return;
+
+  // Evita que o clique no cargo vire o cartão
+  titleEl.addEventListener("click", (e) => {
+    e.stopPropagation();
+  });
+
+  // Salva alterações ao sair do campo (perder o foco)
+  titleEl.addEventListener("blur", () => {
+    const updatedTitle = titleEl.textContent.trim();
+    if (updatedTitle !== "") {
+      saveCatTitle(cardId, updatedTitle);
+    }
+  });
+
+  // Salva alterações ao pressionar Enter
+  titleEl.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault(); // Evita quebra de linha
+      titleEl.blur(); // Dispara o evento 'blur'
+    }
+  });
+}
+
+// Atualize a chamada inicial no DOMContentLoaded:
+document.addEventListener("DOMContentLoaded", () => {
+  loadCardData("0007-GATA");
+  setupNameEditing("0007-GATA");
+  setupTitleEditing("0007-GATA"); // <-- Adicionado aqui
 });
