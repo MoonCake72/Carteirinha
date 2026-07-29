@@ -16,5 +16,3 @@ class CatCardResponse(CatCardBase):
 
     class Config:
         from_attributes = True
-
-
