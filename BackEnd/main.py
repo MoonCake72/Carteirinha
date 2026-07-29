@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, Body
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from database import engine, Base, get_db
@@ -32,3 +32,18 @@ def create_card(card: schemas.CatCardBase, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(db_card)
     return db_card
+
+@app.patch("/api/card/{card_id}/name", response_model=schemas.CatCardResponse)
+def update_cat_name(card_id: int, payload: dict = Body(...), db: Session = Depends(get_db)):
+    card = db.query(models.CatCard).filter(models.CatCard.id == card_id).first()
+    if not card:
+        raise HTTPException(status_code=404, detail="Carteirinha não encontrada")
+    
+    new_name = payload.get("name")
+    if not new_name or not new_name.strip():
+        raise HTTPException(status_code=400, detail="O nome não pode ser vazio")
+        
+    card.name = new_name.strip()
+    db.commit()
+    db.refresh(card)
+    return card
