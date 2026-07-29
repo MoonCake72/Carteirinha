@@ -25,17 +25,17 @@ def read_card(card_id: str, db: Session = Depends(get_db)):
     return card
 
 # Rota para atualizar o nome usando a chave id_number
-@app.patch("/api/card/{card_id}/title", response_model=schemas.CatCardResponse)
-def update_cat_title(card_id: str, payload: dict = Body(...), db: Session = Depends(get_db)):
+@app.patch("/api/card/{card_id}/breed", response_model=schemas.CatCardResponse)
+def update_cat_breed(card_id: str, payload: dict = Body(...), db: Session = Depends(get_db)):
     card = db.query(models.CatCard).filter(models.CatCard.id_number == card_id).first()
     if not card:
         raise HTTPException(status_code=404, detail="Carteirinha não encontrada")
     
-    new_title = payload.get("title")
-    if not new_title or not new_title.strip():
-        raise HTTPException(status_code=400, detail="O cargo não pode ser vazio")
+    new_breed = payload.get("breed")
+    if not new_breed or not new_breed.strip():
+        raise HTTPException(status_code=400, detail="A raça não pode ser vazia")
         
-    card.title = new_title.strip()
+    card.breed = new_breed.strip()
     db.commit()
     db.refresh(card)
     return card
