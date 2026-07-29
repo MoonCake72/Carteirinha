@@ -25,6 +25,38 @@ def read_card(card_id: str, db: Session = Depends(get_db)):
     return card
 
 # Rota para atualizar o nome usando a chave id_number
+@app.patch("/api/card/{card_id}/name", response_model=schemas.CatCardResponse)
+def update_cat_name(card_id: str, payload: dict = Body(...), db: Session = Depends(get_db)):
+    card = db.query(models.CatCard).filter(models.CatCard.id_number == card_id).first()
+    if not card:
+        raise HTTPException(status_code=404, detail="Carteirinha não encontrada")
+    
+    new_name = payload.get("name")
+    if not new_name or not new_name.strip():
+        raise HTTPException(status_code=400, detail="O nome não pode ser vazio")
+        
+    card.name = new_name.strip()
+    db.commit()
+    db.refresh(card)
+    return card
+
+# Rota para atualizar o cargo usando a chave id_number
+@app.patch("/api/card/{card_id}/title", response_model=schemas.CatCardResponse)
+def update_cat_title(card_id: str, payload: dict = Body(...), db: Session = Depends(get_db)):
+    card = db.query(models.CatCard).filter(models.CatCard.id_number == card_id).first()
+    if not card:
+        raise HTTPException(status_code=404, detail="Carteirinha não encontrada")
+    
+    new_title = payload.get("title")
+    if not new_title or not new_title.strip():
+        raise HTTPException(status_code=400, detail="O cargo não pode ser vazio")
+        
+    card.title = new_title.strip()
+    db.commit()
+    db.refresh(card)
+    return card
+
+# Rota para atualizar o nome usando a chave id_number
 @app.patch("/api/card/{card_id}/breed", response_model=schemas.CatCardResponse)
 def update_cat_breed(card_id: str, payload: dict = Body(...), db: Session = Depends(get_db)):
     card = db.query(models.CatCard).filter(models.CatCard.id_number == card_id).first()
@@ -36,6 +68,22 @@ def update_cat_breed(card_id: str, payload: dict = Body(...), db: Session = Depe
         raise HTTPException(status_code=400, detail="A raça não pode ser vazia")
         
     card.breed = new_breed.strip()
+    db.commit()
+    db.refresh(card)
+    return card
+
+# Rota para atualizar a data de nascimento
+@app.patch("/api/card/{card_id}/birth_date", response_model=schemas.CatCardResponse)
+def update_cat_birth_date(card_id: str, payload: dict = Body(...), db: Session = Depends(get_db)):
+    card = db.query(models.CatCard).filter(models.CatCard.id_number == card_id).first()
+    if not card:
+        raise HTTPException(status_code=404, detail="Carteirinha não encontrada")
+    
+    new_birth_date = payload.get("birth_date")
+    if not new_birth_date or not new_birth_date.strip():
+        raise HTTPException(status_code=400, detail="A data de nascimento não pode ser vazia")
+        
+    card.birth_date = new_birth_date.strip()
     db.commit()
     db.refresh(card)
     return card

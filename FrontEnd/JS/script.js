@@ -176,10 +176,56 @@ function setupBreedEditing(cardId = "0007-GATA") {
   });
 }
 
+// Salva a nova data de nascimento no banco via API
+async function saveCatBirthDate(cardId, newBirthDate) {
+  try {
+    const response = await fetch(`http://127.0.0.1:8000/api/card/${cardId}/birth_date`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ birth_date: newBirthDate }),
+    });
+
+    if (!response.ok) throw new Error("Erro ao salvar a data de nascimento no banco");
+    console.log("Data de nascimento atualizada com sucesso no PostgreSQL!");
+  } catch (error) {
+    console.error("Erro ao atualizar a data de nascimento:", error);
+  }
+}
+
+// Configura a edição do campo de nascimento
+function setupBirthDateEditing(cardId = "0007-GATA") {
+  const birthEl = document.querySelector('.editable-field[data-field="birth_date"]');
+  if (!birthEl) return;
+
+  // Evita que o clique vire o cartão
+  birthEl.addEventListener("click", (e) => {
+    e.stopPropagation();
+  });
+
+  // Salva alterações ao perder o foco
+  birthEl.addEventListener("blur", () => {
+    const updatedBirthDate = birthEl.textContent.trim();
+    if (updatedBirthDate !== "") {
+      saveCatBirthDate(cardId, updatedBirthDate);
+    }
+  });
+
+  // Salva alterações ao pressionar Enter
+  birthEl.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault(); // Evita quebra de linha
+      birthEl.blur(); // Dispara o 'blur'
+    }
+  });
+}
+
 // Atualize a chamada inicial no DOMContentLoaded:
 document.addEventListener("DOMContentLoaded", () => {
   loadCardData("0007-GATA");
   setupNameEditing("0007-GATA");
   setupTitleEditing("0007-GATA");
-  setupBreedEditing("0007-GATA"); // <-- Adicionado aqui
+  setupBreedEditing("0007-GATA");
+  setupBirthDateEditing("0007-GATA"); // <-- Adicionado aqui
 });
