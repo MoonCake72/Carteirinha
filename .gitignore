@@ -1,0 +1,10 @@
+# Ambientes virtuais e arquivos do Python
+venv/
+.venv/
+BackEnd/venv/
+backend/venv/
+__pycache__/
+*.pyc
+
+# Arquivos de ambiente e chaves secretas (se houver no futuro)
+.env
