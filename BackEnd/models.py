@@ -11,5 +11,6 @@ class CatCard(Base):
     birth_date = Column(String)
     color = Column(String)
     owner = Column(String)
+    second_owner = Column(String, nullable=True, default="")
     superpower = Column(String)
     favorite_food = Column(String)

@@ -6,7 +6,7 @@ card.addEventListener("click", () => {
 });
 
 // Carrega os dados da API ao abrir a página
-async function loadCardData(cardId = 1) {
+async function loadCardData(cardId = "0007-GATA") {
   try {
     const response = await fetch(`http://127.0.0.1:8000/api/card/${cardId}`);
     if (!response.ok) throw new Error("Erro ao carregar dados do banco");
@@ -20,259 +20,239 @@ async function loadCardData(cardId = 1) {
     document.querySelector(".cat-title").textContent = data.title;
     document.querySelector(".id-num").textContent = `ID Nº ${data.id_number}`;
 
-    // Preenche o VERSO
-    const fields = document.querySelectorAll(".field");
-    if (fields.length >= 6) {
-      fields[0].querySelectorAll("span")[1].textContent = data.breed;
-      fields[1].querySelectorAll("span")[1].textContent = data.birth_date;
-      fields[2].querySelectorAll("span")[1].textContent = data.color;
-      fields[3].querySelectorAll("span")[1].textContent = data.owner;
-      fields[4].querySelectorAll("span")[1].textContent = data.superpower;
-      fields[5].querySelectorAll("span")[1].textContent = data.favorite_food;
-    }
+    // Helper para preencher os campos editáveis do verso pelo atributo data-field
+    const setFieldValue = (field, val) => {
+      const el = document.querySelector(`.editable-field[data-field="${field}"]`);
+      if (el) el.textContent = val !== undefined && val !== null && val !== "" ? val : (field === "second_owner" ? "Opcional" : "");
+    };
+
+    setFieldValue("breed", data.breed);
+    setFieldValue("birth_date", data.birth_date);
+    setFieldValue("color", data.color);
+    setFieldValue("owner", data.owner);
+    setFieldValue("second_owner", data.second_owner);
+    setFieldValue("superpower", data.superpower);
+    setFieldValue("favorite_food", data.favorite_food);
+
   } catch (error) {
     console.error("Erro na integração:", error);
   }
 }
 
-// Salva o novo nome no banco de dados via API
+// ------------------- FRENTE: NOME -------------------
 async function saveCatName(cardId, newName) {
   try {
     const response = await fetch(`http://127.0.0.1:8000/api/card/${cardId}/name`, {
       method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: newName }),
     });
-
     if (!response.ok) throw new Error("Erro ao salvar o nome no banco");
-    console.log("Nome atualizado com sucesso no PostgreSQL!");
   } catch (error) {
     console.error("Erro ao atualizar o nome:", error);
   }
 }
 
-// Configura a edição do campo de nome
-function setupNameEditing(cardId = 1) {
+function setupNameEditing(cardId = "0007-GATA") {
   const nameEl = document.querySelector(".cat-name");
   if (!nameEl) return;
 
-  // Evita que o clique no nome dispare o evento de virar o cartão
-  nameEl.addEventListener("click", (e) => {
-    e.stopPropagation();
-  });
-
-  // Salva alterações ao sair do campo (perder o foco)
+  nameEl.addEventListener("click", (e) => e.stopPropagation());
   nameEl.addEventListener("blur", () => {
     const updatedName = nameEl.textContent.trim();
-    if (updatedName !== "") {
-      saveCatName(cardId, updatedName);
-    }
+    if (updatedName !== "") saveCatName(cardId, updatedName);
   });
-
-  // Salva alterações ao pressionar Enter e remove o foco
   nameEl.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
-      e.preventDefault(); // Evita quebra de linha no nome
-      nameEl.blur(); // Dispara o evento 'blur'
+      e.preventDefault();
+      nameEl.blur();
     }
   });
 }
 
-// Inicializa quando a página carrega
-document.addEventListener("DOMContentLoaded", () => {
-  loadCardData("0007-GATA");
-  setupNameEditing("0007-GATA");
-});
-
-// Salva o novo cargo no banco via API
+// ------------------- FRENTE: CARGO -------------------
 async function saveCatTitle(cardId, newTitle) {
   try {
     const response = await fetch(`http://127.0.0.1:8000/api/card/${cardId}/title`, {
       method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title: newTitle }),
     });
-
     if (!response.ok) throw new Error("Erro ao salvar o cargo no banco");
-    console.log("Cargo atualizado com sucesso no PostgreSQL!");
   } catch (error) {
     console.error("Erro ao atualizar o cargo:", error);
   }
 }
 
-// Configura a edição do campo de cargo
 function setupTitleEditing(cardId = "0007-GATA") {
   const titleEl = document.querySelector(".cat-title");
   if (!titleEl) return;
 
-  // Evita que o clique no cargo vire o cartão
-  titleEl.addEventListener("click", (e) => {
-    e.stopPropagation();
-  });
-
-  // Salva alterações ao sair do campo (perder o foco)
+  titleEl.addEventListener("click", (e) => e.stopPropagation());
   titleEl.addEventListener("blur", () => {
     const updatedTitle = titleEl.textContent.trim();
-    if (updatedTitle !== "") {
-      saveCatTitle(cardId, updatedTitle);
-    }
+    if (updatedTitle !== "") saveCatTitle(cardId, updatedTitle);
   });
-
-  // Salva alterações ao pressionar Enter
   titleEl.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
-      e.preventDefault(); // Evita quebra de linha
-      titleEl.blur(); // Dispara o evento 'blur'
+      e.preventDefault();
+      titleEl.blur();
     }
   });
 }
 
-// Salva a nova raça no banco via API
+// ------------------- VERSO: RAÇA -------------------
 async function saveCatBreed(cardId, newBreed) {
   try {
     const response = await fetch(`http://127.0.0.1:8000/api/card/${cardId}/breed`, {
       method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ breed: newBreed }),
     });
-
     if (!response.ok) throw new Error("Erro ao salvar a raça no banco");
-    console.log("Raça atualizada com sucesso no PostgreSQL!");
   } catch (error) {
     console.error("Erro ao atualizar a raça:", error);
   }
 }
 
-// Configura a edição do campo de raça
 function setupBreedEditing(cardId = "0007-GATA") {
   const breedEl = document.querySelector('.editable-field[data-field="breed"]');
   if (!breedEl) return;
 
-  // Evita que o clique para editar vire o cartão de volta para a frente
-  breedEl.addEventListener("click", (e) => {
-    e.stopPropagation();
-  });
-
-  // Salva alterações ao perder o foco
+  breedEl.addEventListener("click", (e) => e.stopPropagation());
   breedEl.addEventListener("blur", () => {
     const updatedBreed = breedEl.textContent.trim();
-    if (updatedBreed !== "") {
-      saveCatBreed(cardId, updatedBreed);
-    }
+    if (updatedBreed !== "") saveCatBreed(cardId, updatedBreed);
   });
-
-  // Salva alterações ao pressionar Enter
   breedEl.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
-      e.preventDefault(); // Evita quebra de linha
-      breedEl.blur(); // Dispara o 'blur'
+      e.preventDefault();
+      breedEl.blur();
     }
   });
 }
 
-// Salva a nova data de nascimento no banco via API
+// ------------------- VERSO: NASCIMENTO -------------------
 async function saveCatBirthDate(cardId, newBirthDate) {
   try {
     const response = await fetch(`http://127.0.0.1:8000/api/card/${cardId}/birth_date`, {
       method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ birth_date: newBirthDate }),
     });
-
     if (!response.ok) throw new Error("Erro ao salvar a data de nascimento no banco");
-    console.log("Data de nascimento atualizada com sucesso no PostgreSQL!");
   } catch (error) {
     console.error("Erro ao atualizar a data de nascimento:", error);
   }
 }
 
-// Configura a edição do campo de nascimento
 function setupBirthDateEditing(cardId = "0007-GATA") {
   const birthEl = document.querySelector('.editable-field[data-field="birth_date"]');
   if (!birthEl) return;
 
-  // Evita que o clique vire o cartão
-  birthEl.addEventListener("click", (e) => {
-    e.stopPropagation();
-  });
-
-  // Salva alterações ao perder o foco
+  birthEl.addEventListener("click", (e) => e.stopPropagation());
   birthEl.addEventListener("blur", () => {
     const updatedBirthDate = birthEl.textContent.trim();
-    if (updatedBirthDate !== "") {
-      saveCatBirthDate(cardId, updatedBirthDate);
-    }
+    if (updatedBirthDate !== "") saveCatBirthDate(cardId, updatedBirthDate);
   });
-
-  // Salva alterações ao pressionar Enter
   birthEl.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
-      e.preventDefault(); // Evita quebra de linha
-      birthEl.blur(); // Dispara o 'blur'
+      e.preventDefault();
+      birthEl.blur();
     }
   });
 }
 
-
-// Salva a nova cor no banco via API
+// ------------------- VERSO: COR -------------------
 async function saveCatColor(cardId, newColor) {
   try {
     const response = await fetch(`http://127.0.0.1:8000/api/card/${cardId}/color`, {
       method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ color: newColor }),
     });
-
     if (!response.ok) throw new Error("Erro ao salvar a cor no banco");
-    console.log("Cor atualizada com sucesso no PostgreSQL!");
   } catch (error) {
     console.error("Erro ao atualizar a cor:", error);
   }
 }
 
-// Configura a edição do campo de cor
 function setupColorEditing(cardId = "0007-GATA") {
   const colorEl = document.querySelector('.editable-field[data-field="color"]');
   if (!colorEl) return;
 
-  // Evita que o clique vire o cartão
-  colorEl.addEventListener("click", (e) => {
-    e.stopPropagation();
-  });
-
-  // Salva alterações ao perder o foco
+  colorEl.addEventListener("click", (e) => e.stopPropagation());
   colorEl.addEventListener("blur", () => {
     const updatedColor = colorEl.textContent.trim();
-    if (updatedColor !== "") {
-      saveCatColor(cardId, updatedColor);
-    }
+    if (updatedColor !== "") saveCatColor(cardId, updatedColor);
   });
-
-  // Salva alterações ao pressionar Enter
   colorEl.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
-      e.preventDefault(); // Evita quebra de linha
-      colorEl.blur(); // Dispara o 'blur'
+      e.preventDefault();
+      colorEl.blur();
     }
   });
 }
 
-// Atualize a chamada inicial no DOMContentLoaded:
+// ------------------- VERSO: TUTOR 1 & TUTOR 2 -------------------
+async function saveCatOwner(cardId, newOwner) {
+  try {
+    await fetch(`http://127.0.0.1:8000/api/card/${cardId}/owner`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ owner: newOwner }),
+    });
+  } catch (error) {
+    console.error("Erro ao atualizar Tutor 1:", error);
+  }
+}
+
+async function saveCatSecondOwner(cardId, newSecondOwner) {
+  try {
+    await fetch(`http://127.0.0.1:8000/api/card/${cardId}/second_owner`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ second_owner: newSecondOwner }),
+    });
+  } catch (error) {
+    console.error("Erro ao atualizar Tutor 2:", error);
+  }
+}
+
+function setupOwnersEditing(cardId = "0007-GATA") {
+  const owner1El = document.querySelector('.editable-field[data-field="owner"]');
+  const owner2El = document.querySelector('.editable-field[data-field="second_owner"]');
+
+  if (owner1El) {
+    owner1El.addEventListener("click", (e) => e.stopPropagation());
+    owner1El.addEventListener("blur", () => saveCatOwner(cardId, owner1El.textContent.trim()));
+    owner1El.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        owner1El.blur();
+      }
+    });
+  }
+
+  if (owner2El) {
+    owner2El.addEventListener("click", (e) => e.stopPropagation());
+    owner2El.addEventListener("blur", () => saveCatSecondOwner(cardId, owner2El.textContent.trim()));
+    owner2El.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        owner2El.blur();
+      }
+    });
+  }
+}
+
+// INICIALIZAÇÃO DA PÁGINA
 document.addEventListener("DOMContentLoaded", () => {
   loadCardData("0007-GATA");
   setupNameEditing("0007-GATA");
   setupTitleEditing("0007-GATA");
   setupBreedEditing("0007-GATA");
   setupBirthDateEditing("0007-GATA");
-  setupColorEditing("0007-GATA"); // <-- Adicionado aqui
+  setupColorEditing("0007-GATA");
+  setupOwnersEditing("0007-GATA");
 });

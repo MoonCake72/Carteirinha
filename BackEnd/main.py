@@ -104,6 +104,32 @@ def update_cat_color(card_id: str, payload: dict = Body(...), db: Session = Depe
     db.refresh(card)
     return card
 
+# Rota para atualizar o Tutor 1
+@app.patch("/api/card/{card_id}/owner", response_model=schemas.CatCardResponse)
+def update_cat_owner(card_id: str, payload: dict = Body(...), db: Session = Depends(get_db)):
+    card = db.query(models.CatCard).filter(models.CatCard.id_number == card_id).first()
+    if not card:
+        raise HTTPException(status_code=404, detail="Carteirinha não encontrada")
+    
+    new_owner = payload.get("owner", "")
+    card.owner = new_owner.strip()
+    db.commit()
+    db.refresh(card)
+    return card
+
+# Rota para atualizar o Tutor 2
+@app.patch("/api/card/{card_id}/second_owner", response_model=schemas.CatCardResponse)
+def update_cat_second_owner(card_id: str, payload: dict = Body(...), db: Session = Depends(get_db)):
+    card = db.query(models.CatCard).filter(models.CatCard.id_number == card_id).first()
+    if not card:
+        raise HTTPException(status_code=404, detail="Carteirinha não encontrada")
+    
+    new_second_owner = payload.get("second_owner", "")
+    card.second_owner = new_second_owner.strip()
+    db.commit()
+    db.refresh(card)
+    return card
+
 # Rota para criar cartão
 @app.post("/api/card", response_model=schemas.CatCardResponse)
 def create_card(card: schemas.CatCardBase, db: Session = Depends(get_db)):

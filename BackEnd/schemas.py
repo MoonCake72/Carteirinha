@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import Optional
 
 class CatCardBase(BaseModel):
     id_number: str
@@ -8,6 +9,7 @@ class CatCardBase(BaseModel):
     birth_date: str
     color: str
     owner: str
+    second_owner: Optional[str] = ""
     superpower: str
     favorite_food: str
 
