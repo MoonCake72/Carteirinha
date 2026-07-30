@@ -221,11 +221,58 @@ function setupBirthDateEditing(cardId = "0007-GATA") {
   });
 }
 
+
+// Salva a nova cor no banco via API
+async function saveCatColor(cardId, newColor) {
+  try {
+    const response = await fetch(`http://127.0.0.1:8000/api/card/${cardId}/color`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ color: newColor }),
+    });
+
+    if (!response.ok) throw new Error("Erro ao salvar a cor no banco");
+    console.log("Cor atualizada com sucesso no PostgreSQL!");
+  } catch (error) {
+    console.error("Erro ao atualizar a cor:", error);
+  }
+}
+
+// Configura a edição do campo de cor
+function setupColorEditing(cardId = "0007-GATA") {
+  const colorEl = document.querySelector('.editable-field[data-field="color"]');
+  if (!colorEl) return;
+
+  // Evita que o clique vire o cartão
+  colorEl.addEventListener("click", (e) => {
+    e.stopPropagation();
+  });
+
+  // Salva alterações ao perder o foco
+  colorEl.addEventListener("blur", () => {
+    const updatedColor = colorEl.textContent.trim();
+    if (updatedColor !== "") {
+      saveCatColor(cardId, updatedColor);
+    }
+  });
+
+  // Salva alterações ao pressionar Enter
+  colorEl.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault(); // Evita quebra de linha
+      colorEl.blur(); // Dispara o 'blur'
+    }
+  });
+}
+
 // Atualize a chamada inicial no DOMContentLoaded:
 document.addEventListener("DOMContentLoaded", () => {
   loadCardData("0007-GATA");
   setupNameEditing("0007-GATA");
   setupTitleEditing("0007-GATA");
   setupBreedEditing("0007-GATA");
-  setupBirthDateEditing("0007-GATA"); // <-- Adicionado aqui
+  setupBirthDateEditing("0007-GATA");
+  setupColorEditing("0007-GATA"); // <-- Adicionado aqui
 });

@@ -88,6 +88,22 @@ def update_cat_birth_date(card_id: str, payload: dict = Body(...), db: Session =
     db.refresh(card)
     return card
 
+# Rota para atualizar a cor
+@app.patch("/api/card/{card_id}/color", response_model=schemas.CatCardResponse)
+def update_cat_color(card_id: str, payload: dict = Body(...), db: Session = Depends(get_db)):
+    card = db.query(models.CatCard).filter(models.CatCard.id_number == card_id).first()
+    if not card:
+        raise HTTPException(status_code=404, detail="Carteirinha não encontrada")
+    
+    new_color = payload.get("color")
+    if not new_color or not new_color.strip():
+        raise HTTPException(status_code=400, detail="A cor não pode ser vazia")
+        
+    card.color = new_color.strip()
+    db.commit()
+    db.refresh(card)
+    return card
+
 # Rota para criar cartão
 @app.post("/api/card", response_model=schemas.CatCardResponse)
 def create_card(card: schemas.CatCardBase, db: Session = Depends(get_db)):
