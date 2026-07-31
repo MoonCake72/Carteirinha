@@ -246,6 +246,39 @@ function setupOwnersEditing(cardId = "0007-GATA") {
   }
 }
 
+// Salva o novo superpoder no banco via API
+async function saveCatSuperpower(cardId, newSuperpower) {
+  try {
+    const response = await fetch(`http://127.0.0.1:8000/api/card/${cardId}/superpower`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ superpower: newSuperpower }),
+    });
+    if (!response.ok) throw new Error("Erro ao salvar o superpoder no banco");
+    console.log("Superpoder atualizado com sucesso no PostgreSQL!");
+  } catch (error) {
+    console.error("Erro ao atualizar o superpoder:", error);
+  }
+}
+
+// Configura a edição do campo de superpoder
+function setupSuperpowerEditing(cardId = "0007-GATA") {
+  const superpowerEl = document.querySelector('.editable-field[data-field="superpower"]');
+  if (!superpowerEl) return;
+
+  superpowerEl.addEventListener("click", (e) => e.stopPropagation());
+  superpowerEl.addEventListener("blur", () => {
+    const updatedSuperpower = superpowerEl.textContent.trim();
+    if (updatedSuperpower !== "") saveCatSuperpower(cardId, updatedSuperpower);
+  });
+  superpowerEl.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      superpowerEl.blur();
+    }
+  });
+}
+
 // INICIALIZAÇÃO DA PÁGINA
 document.addEventListener("DOMContentLoaded", () => {
   loadCardData("0007-GATA");
@@ -255,4 +288,5 @@ document.addEventListener("DOMContentLoaded", () => {
   setupBirthDateEditing("0007-GATA");
   setupColorEditing("0007-GATA");
   setupOwnersEditing("0007-GATA");
+  setupSuperpowerEditing("0007-GATA");
 });

@@ -130,6 +130,19 @@ def update_cat_second_owner(card_id: str, payload: dict = Body(...), db: Session
     db.refresh(card)
     return card
 
+# Rota para atualizar o superpoder
+@app.patch("/api/card/{card_id}/superpower", response_model=schemas.CatCardResponse)
+def update_cat_superpower(card_id: str, payload: dict = Body(...), db: Session = Depends(get_db)):
+    card = db.query(models.CatCard).filter(models.CatCard.id_number == card_id).first()
+    if not card:
+        raise HTTPException(status_code=404, detail="Carteirinha não encontrada")
+    
+    new_superpower = payload.get("superpower", "")
+    card.superpower = new_superpower.strip()
+    db.commit()
+    db.refresh(card)
+    return card
+
 # Rota para criar cartão
 @app.post("/api/card", response_model=schemas.CatCardResponse)
 def create_card(card: schemas.CatCardBase, db: Session = Depends(get_db)):
