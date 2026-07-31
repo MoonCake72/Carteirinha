@@ -143,6 +143,19 @@ def update_cat_superpower(card_id: str, payload: dict = Body(...), db: Session =
     db.refresh(card)
     return card
 
+# Rota para atualizar a comida favorita
+@app.patch("/api/card/{card_id}/favorite_food", response_model=schemas.CatCardResponse)
+def update_cat_favorite_food(card_id: str, payload: dict = Body(...), db: Session = Depends(get_db)):
+    card = db.query(models.CatCard).filter(models.CatCard.id_number == card_id).first()
+    if not card:
+        raise HTTPException(status_code=404, detail="Carteirinha não encontrada")
+    
+    new_favorite_food = payload.get("favorite_food", "")
+    card.favorite_food = new_favorite_food.strip()
+    db.commit()
+    db.refresh(card)
+    return card
+    
 # Rota para criar cartão
 @app.post("/api/card", response_model=schemas.CatCardResponse)
 def create_card(card: schemas.CatCardBase, db: Session = Depends(get_db)):

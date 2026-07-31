@@ -279,6 +279,39 @@ function setupSuperpowerEditing(cardId = "0007-GATA") {
   });
 }
 
+// Salva a nova comida favorita no banco via API
+async function saveCatFavoriteFood(cardId, newFood) {
+  try {
+    const response = await fetch(`http://127.0.0.1:8000/api/card/${cardId}/favorite_food`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ favorite_food: newFood }),
+    });
+    if (!response.ok) throw new Error("Erro ao salvar a comida favorita no banco");
+    console.log("Comida favorita atualizada com sucesso no PostgreSQL!");
+  } catch (error) {
+    console.error("Erro ao atualizar a comida favorita:", error);
+  }
+}
+
+// Configura a edição do campo de comida favorita
+function setupFavoriteFoodEditing(cardId = "0007-GATA") {
+  const foodEl = document.querySelector('.editable-field[data-field="favorite_food"]');
+  if (!foodEl) return;
+
+  foodEl.addEventListener("click", (e) => e.stopPropagation());
+  foodEl.addEventListener("blur", () => {
+    const updatedFood = foodEl.textContent.trim();
+    if (updatedFood !== "") saveCatFavoriteFood(cardId, updatedFood);
+  });
+  foodEl.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      foodEl.blur();
+    }
+  });
+}
+
 // INICIALIZAÇÃO DA PÁGINA
 document.addEventListener("DOMContentLoaded", () => {
   loadCardData("0007-GATA");
@@ -289,4 +322,5 @@ document.addEventListener("DOMContentLoaded", () => {
   setupColorEditing("0007-GATA");
   setupOwnersEditing("0007-GATA");
   setupSuperpowerEditing("0007-GATA");
+  setupFavoriteFoodEditing("0007-GATA")
 });
