@@ -22,11 +22,11 @@ function setupCardNavigation() {
   card.addEventListener("click", (e) => {
     // Evita disparar a rotação ao clicar em elementos interativos
     const isInteractive = e.target.closest('[contenteditable="true"]') ||
-                          e.target.closest('.editable-field') ||
-                          e.target.closest('input') ||
-                          e.target.closest('select') ||
-                          e.target.closest('button') ||
-                          e.target.closest('.history-list');
+      e.target.closest('.editable-field') ||
+      e.target.closest('input') ||
+      e.target.closest('select') ||
+      e.target.closest('button') ||
+      e.target.closest('.history-list');
 
     if (isInteractive) return;
 
@@ -56,24 +56,34 @@ function setupCardNavigation() {
   });
 }
 
-// ------------------- LÓGICA DE VACINAS (LOCALSTORAGE) -------------------
-function setupVaccinesSystem() {
+function setupVaccinesSystem(cardId = "0007-GATA") {
   const form = document.getElementById("vaccine-form");
   if (!form) return;
 
-  const petNameInput = document.getElementById("pet-name");
   const dateInput = document.getElementById("vaccine-date");
   const vaccineTypeSelect = document.getElementById("vaccine-type");
   const historyList = document.getElementById("history-list");
   const emptyMsg = document.getElementById("empty-msg");
   const clearHistoryBtn = document.getElementById("clear-history-btn");
 
-  let vaccines = JSON.parse(localStorage.getItem("cat_vaccines")) || [];
+  let vaccines = [];
 
   function formatDate(dateStr) {
     if (!dateStr) return "";
     const [year, month, day] = dateStr.split("-");
     return `${day}/${month}/${year}`;
+  }
+
+  async function loadVaccines() {
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/api/card/${cardId}/vaccines`);
+      if (!response.ok) throw new Error("Erro ao carregar vacinas do banco");
+
+      vaccines = await response.json();
+      renderHistory();
+    } catch (error) {
+      console.error("Erro ao carregar histórico de vacinas:", error);
+    }
   }
 
   function renderHistory() {
@@ -90,54 +100,77 @@ function setupVaccinesSystem() {
 
     if (emptyMsg) emptyMsg.style.display = "none";
 
-    vaccines.forEach((v, index) => {
+    vaccines.forEach((v) => {
       const item = document.createElement("div");
       item.className = "vaccine-item";
       item.innerHTML = `
         <div>
-          <strong>${v.type} (${v.name})</strong>
+          <strong>${v.type}</strong>
           <span>Aplicada em: ${formatDate(v.date)}</span>
         </div>
-        <button type="button" class="btn-delete-item" onclick="removeVaccine(${index})">✕</button>
+        <button type="button" class="btn-delete-item" onclick="removeVaccine(${v.id})">✕</button>
       `;
       historyList.appendChild(item);
     });
   }
 
-  form.addEventListener("submit", (e) => {
+  form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
     const newVaccine = {
-      name: petNameInput.value.trim(),
       date: dateInput.value,
       type: vaccineTypeSelect.value,
     };
 
-    vaccines.unshift(newVaccine);
-    localStorage.setItem("cat_vaccines", JSON.stringify(vaccines));
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/api/card/${cardId}/vaccines`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newVaccine),
+      });
 
-    petNameInput.value = "";
-    dateInput.value = "";
-    renderHistory();
+      if (!response.ok) throw new Error("Erro ao salvar vacina");
+
+      dateInput.value = "";
+      loadVaccines();
+    } catch (error) {
+      console.error("Erro ao cadastrar vacina:", error);
+    }
   });
 
-  window.removeVaccine = function (index) {
-    vaccines.splice(index, 1);
-    localStorage.setItem("cat_vaccines", JSON.stringify(vaccines));
-    renderHistory();
+  window.removeVaccine = async function (vaccineId) {
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/api/card/${cardId}/vaccines/${vaccineId}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) throw new Error("Erro ao remover vacina");
+
+      loadVaccines();
+    } catch (error) {
+      console.error("Erro ao remover vacina:", error);
+    }
   };
 
   if (clearHistoryBtn) {
-    clearHistoryBtn.addEventListener("click", () => {
-      if (confirm("Deseja apagar todo o histórico de vacinas?")) {
-        vaccines = [];
-        localStorage.removeItem("cat_vaccines");
-        renderHistory();
+    clearHistoryBtn.addEventListener("click", async () => {
+      if (confirm("Deseja apagar todo o histórico de vacinas desse pet?")) {
+        try {
+          const response = await fetch(`http://127.0.0.1:8000/api/card/${cardId}/vaccines`, {
+            method: "DELETE",
+          });
+
+          if (!response.ok) throw new Error("Erro ao apagar histórico");
+
+          loadVaccines();
+        } catch (error) {
+          console.error("Erro ao apagar histórico de vacinas:", error);
+        }
       }
     });
   }
 
-  renderHistory();
+  loadVaccines();
 }
 
 // ------------------- CARREGAMENTO DE DADOS DA API -------------------
@@ -441,16 +474,18 @@ function setupFavoriteFoodEditing(cardId = "0007-GATA") {
 
 // ------------------- INICIALIZAÇÃO DA PÁGINA -------------------
 document.addEventListener("DOMContentLoaded", () => {
+  const CURRENT_CARD_ID = "0007-GATA";
+
   setupCardNavigation();
-  setupVaccinesSystem();
-  
-  loadCardData("0007-GATA");
-  setupNameEditing("0007-GATA");
-  setupTitleEditing("0007-GATA");
-  setupBreedEditing("0007-GATA");
-  setupBirthDateEditing("0007-GATA");
-  setupColorEditing("0007-GATA");
-  setupOwnersEditing("0007-GATA");
-  setupSuperpowerEditing("0007-GATA");
-  setupFavoriteFoodEditing("0007-GATA");
+  setupVaccinesSystem(CURRENT_CARD_ID);
+
+  loadCardData(CURRENT_CARD_ID);
+  setupNameEditing(CURRENT_CARD_ID);
+  setupTitleEditing(CURRENT_CARD_ID);
+  setupBreedEditing(CURRENT_CARD_ID);
+  setupBirthDateEditing(CURRENT_CARD_ID);
+  setupColorEditing(CURRENT_CARD_ID);
+  setupOwnersEditing(CURRENT_CARD_ID);
+  setupSuperpowerEditing(CURRENT_CARD_ID);
+  setupFavoriteFoodEditing(CURRENT_CARD_ID);
 });

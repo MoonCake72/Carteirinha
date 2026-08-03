@@ -1,3 +1,4 @@
+from typing import List
 from fastapi import FastAPI, Depends, HTTPException, Body
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
@@ -15,6 +16,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ------------------- ROTAS DA CARTEIRINHA PET -------------------
 
 # Rota para buscar o cartão pelo id_number
 @app.get("/api/card/{card_id}", response_model=schemas.CatCardResponse)
@@ -56,7 +59,7 @@ def update_cat_title(card_id: str, payload: dict = Body(...), db: Session = Depe
     db.refresh(card)
     return card
 
-# Rota para atualizar o nome usando a chave id_number
+# Rota para atualizar a raça
 @app.patch("/api/card/{card_id}/breed", response_model=schemas.CatCardResponse)
 def update_cat_breed(card_id: str, payload: dict = Body(...), db: Session = Depends(get_db)):
     card = db.query(models.CatCard).filter(models.CatCard.id_number == card_id).first()
@@ -164,3 +167,70 @@ def create_card(card: schemas.CatCardBase, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(db_card)
     return db_card
+
+
+# ------------------- ROTAS DE VACINAS -------------------
+
+# 1. Listar vacinas
+@app.get("/api/card/{card_id}/vaccines", response_model=List[schemas.VaccineResponse])
+def get_vaccines(card_id: str, db: Session = Depends(get_db)):
+    card = db.query(models.CatCard).filter(models.CatCard.id_number == card_id).first()
+    if not card:
+        raise HTTPException(status_code=404, detail="Carteirinha não encontrada")
+        
+    vaccines = db.query(models.Vaccine).filter(models.Vaccine.card_id == card_id).order_by(models.Vaccine.id.desc()).all()
+    
+    return [
+        {
+            "id": v.id,
+            "card_id": v.card_id,
+            "date": v.vaccine_date,
+            "type": v.vaccine_type
+        } for v in vaccines
+    ]
+
+# 2. Adicionar vacina
+@app.post("/api/card/{card_id}/vaccines", response_model=schemas.VaccineResponse)
+def add_vaccine(card_id: str, vaccine: schemas.VaccineCreate, db: Session = Depends(get_db)):
+    card = db.query(models.CatCard).filter(models.CatCard.id_number == card_id).first()
+    if not card:
+        raise HTTPException(status_code=404, detail="Carteirinha não encontrada")
+
+    new_vaccine = models.Vaccine(
+        card_id=card_id,
+        pet_name=card.name, # Pega o nome do pet direto do card cadastrado no banco (opcional)
+        vaccine_date=vaccine.date.strip(),
+        vaccine_type=vaccine.type.strip()
+    )
+    db.add(new_vaccine)
+    db.commit()
+    db.refresh(new_vaccine)
+
+    return {
+        "id": new_vaccine.id,
+        "card_id": new_vaccine.card_id,
+        "date": new_vaccine.vaccine_date,
+        "type": new_vaccine.vaccine_type
+    }
+
+# 3. Remover uma vacina específica
+@app.delete("/api/card/{card_id}/vaccines/{vaccine_id}")
+def delete_vaccine(card_id: str, vaccine_id: int, db: Session = Depends(get_db)):
+    vaccine = db.query(models.Vaccine).filter(
+        models.Vaccine.id == vaccine_id, 
+        models.Vaccine.card_id == card_id
+    ).first()
+    
+    if not vaccine:
+        raise HTTPException(status_code=404, detail="Vacina não encontrada para esta carteirinha")
+        
+    db.delete(vaccine)
+    db.commit()
+    return {"message": "Vacina removida com sucesso"}
+
+# 4. Limpar todo o histórico de vacinas do pet
+@app.delete("/api/card/{card_id}/vaccines")
+def clear_vaccines(card_id: str, db: Session = Depends(get_db)):
+    db.query(models.Vaccine).filter(models.Vaccine.card_id == card_id).delete()
+    db.commit()
+    return {"message": "Histórico de vacinas limpo com sucesso"}
