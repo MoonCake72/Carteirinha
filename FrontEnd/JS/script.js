@@ -1,11 +1,146 @@
-const card = document.getElementById("card");
+// ------------------- NAVEGAÇÃO & ROTAÇÃO 3D DO CARTÃO -------------------
+function setupCardNavigation() {
+  const card = document.getElementById("card");
+  const navButtons = document.querySelectorAll(".nav-btn");
 
-// Vira a carteirinha ao clicar no cartão
-card.addEventListener("click", () => {
-  card.classList.toggle("flipped");
-});
+  if (!card) return;
 
-// Carrega os dados da API ao abrir a página
+  // Atualiza a classe 'active' das abas superiores baseando-se na face atual
+  const updateNavButtons = (face) => {
+    navButtons.forEach((btn) => {
+      const targetPage = btn.getAttribute("data-page");
+      // Mapeia 'front' e 'back' para o botão de Carteirinha
+      if ((targetPage === "front" && (face === "front" || face === "back")) || targetPage === face) {
+        btn.classList.add("active");
+      } else {
+        btn.classList.remove("active");
+      }
+    });
+  };
+
+  // 1. Clique no cartão para ciclar entre FRENTE -> VERSO -> VACINAS -> FRENTE
+  card.addEventListener("click", (e) => {
+    // Evita disparar a rotação ao clicar em elementos interativos
+    const isInteractive = e.target.closest('[contenteditable="true"]') ||
+                          e.target.closest('.editable-field') ||
+                          e.target.closest('input') ||
+                          e.target.closest('select') ||
+                          e.target.closest('button') ||
+                          e.target.closest('.history-list');
+
+    if (isInteractive) return;
+
+    const currentFace = card.getAttribute("data-face") || "front";
+    let nextFace = "front";
+
+    if (currentFace === "front") {
+      nextFace = "back";
+    } else if (currentFace === "back") {
+      nextFace = "vaccines";
+    } else {
+      nextFace = "front";
+    }
+
+    card.setAttribute("data-face", nextFace);
+    updateNavButtons(nextFace);
+  });
+
+  // 2. Clique nas abas superiores para ir direto para uma face
+  navButtons.forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const targetPage = btn.getAttribute("data-page");
+      card.setAttribute("data-face", targetPage);
+      updateNavButtons(targetPage);
+    });
+  });
+}
+
+// ------------------- LÓGICA DE VACINAS (LOCALSTORAGE) -------------------
+function setupVaccinesSystem() {
+  const form = document.getElementById("vaccine-form");
+  if (!form) return;
+
+  const petNameInput = document.getElementById("pet-name");
+  const dateInput = document.getElementById("vaccine-date");
+  const vaccineTypeSelect = document.getElementById("vaccine-type");
+  const historyList = document.getElementById("history-list");
+  const emptyMsg = document.getElementById("empty-msg");
+  const clearHistoryBtn = document.getElementById("clear-history-btn");
+
+  let vaccines = JSON.parse(localStorage.getItem("cat_vaccines")) || [];
+
+  function formatDate(dateStr) {
+    if (!dateStr) return "";
+    const [year, month, day] = dateStr.split("-");
+    return `${day}/${month}/${year}`;
+  }
+
+  function renderHistory() {
+    if (!historyList) return;
+    historyList.innerHTML = "";
+
+    if (vaccines.length === 0) {
+      if (emptyMsg) {
+        historyList.appendChild(emptyMsg);
+        emptyMsg.style.display = "block";
+      }
+      return;
+    }
+
+    if (emptyMsg) emptyMsg.style.display = "none";
+
+    vaccines.forEach((v, index) => {
+      const item = document.createElement("div");
+      item.className = "vaccine-item";
+      item.innerHTML = `
+        <div>
+          <strong>${v.type} (${v.name})</strong>
+          <span>Aplicada em: ${formatDate(v.date)}</span>
+        </div>
+        <button type="button" class="btn-delete-item" onclick="removeVaccine(${index})">✕</button>
+      `;
+      historyList.appendChild(item);
+    });
+  }
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+
+    const newVaccine = {
+      name: petNameInput.value.trim(),
+      date: dateInput.value,
+      type: vaccineTypeSelect.value,
+    };
+
+    vaccines.unshift(newVaccine);
+    localStorage.setItem("cat_vaccines", JSON.stringify(vaccines));
+
+    petNameInput.value = "";
+    dateInput.value = "";
+    renderHistory();
+  });
+
+  window.removeVaccine = function (index) {
+    vaccines.splice(index, 1);
+    localStorage.setItem("cat_vaccines", JSON.stringify(vaccines));
+    renderHistory();
+  };
+
+  if (clearHistoryBtn) {
+    clearHistoryBtn.addEventListener("click", () => {
+      if (confirm("Deseja apagar todo o histórico de vacinas?")) {
+        vaccines = [];
+        localStorage.removeItem("cat_vaccines");
+        renderHistory();
+      }
+    });
+  }
+
+  renderHistory();
+}
+
+// ------------------- CARREGAMENTO DE DADOS DA API -------------------
 async function loadCardData(cardId = "0007-GATA") {
   try {
     const response = await fetch(`http://127.0.0.1:8000/api/card/${cardId}`);
@@ -17,8 +152,11 @@ async function loadCardData(cardId = "0007-GATA") {
     const nameEl = document.querySelector(".cat-name");
     if (nameEl) nameEl.textContent = data.name;
 
-    document.querySelector(".cat-title").textContent = data.title;
-    document.querySelector(".id-num").textContent = `ID Nº ${data.id_number}`;
+    const titleEl = document.querySelector(".cat-title");
+    if (titleEl) titleEl.textContent = data.title;
+
+    const idEl = document.querySelector(".id-num");
+    if (idEl) idEl.textContent = `ID Nº ${data.id_number}`;
 
     // Helper para preencher os campos editáveis do verso pelo atributo data-field
     const setFieldValue = (field, val) => {
@@ -39,7 +177,7 @@ async function loadCardData(cardId = "0007-GATA") {
   }
 }
 
-// ------------------- FRENTE: NOME -------------------
+// ------------------- EDICAO DOS CAMPOS (API PATCH) -------------------
 async function saveCatName(cardId, newName) {
   try {
     const response = await fetch(`http://127.0.0.1:8000/api/card/${cardId}/name`, {
@@ -70,7 +208,6 @@ function setupNameEditing(cardId = "0007-GATA") {
   });
 }
 
-// ------------------- FRENTE: CARGO -------------------
 async function saveCatTitle(cardId, newTitle) {
   try {
     const response = await fetch(`http://127.0.0.1:8000/api/card/${cardId}/title`, {
@@ -101,7 +238,6 @@ function setupTitleEditing(cardId = "0007-GATA") {
   });
 }
 
-// ------------------- VERSO: RAÇA -------------------
 async function saveCatBreed(cardId, newBreed) {
   try {
     const response = await fetch(`http://127.0.0.1:8000/api/card/${cardId}/breed`, {
@@ -132,7 +268,6 @@ function setupBreedEditing(cardId = "0007-GATA") {
   });
 }
 
-// ------------------- VERSO: NASCIMENTO -------------------
 async function saveCatBirthDate(cardId, newBirthDate) {
   try {
     const response = await fetch(`http://127.0.0.1:8000/api/card/${cardId}/birth_date`, {
@@ -163,7 +298,6 @@ function setupBirthDateEditing(cardId = "0007-GATA") {
   });
 }
 
-// ------------------- VERSO: COR -------------------
 async function saveCatColor(cardId, newColor) {
   try {
     const response = await fetch(`http://127.0.0.1:8000/api/card/${cardId}/color`, {
@@ -194,7 +328,6 @@ function setupColorEditing(cardId = "0007-GATA") {
   });
 }
 
-// ------------------- VERSO: TUTOR 1 & TUTOR 2 -------------------
 async function saveCatOwner(cardId, newOwner) {
   try {
     await fetch(`http://127.0.0.1:8000/api/card/${cardId}/owner`, {
@@ -246,7 +379,6 @@ function setupOwnersEditing(cardId = "0007-GATA") {
   }
 }
 
-// Salva o novo superpoder no banco via API
 async function saveCatSuperpower(cardId, newSuperpower) {
   try {
     const response = await fetch(`http://127.0.0.1:8000/api/card/${cardId}/superpower`, {
@@ -255,13 +387,11 @@ async function saveCatSuperpower(cardId, newSuperpower) {
       body: JSON.stringify({ superpower: newSuperpower }),
     });
     if (!response.ok) throw new Error("Erro ao salvar o superpoder no banco");
-    console.log("Superpoder atualizado com sucesso no PostgreSQL!");
   } catch (error) {
     console.error("Erro ao atualizar o superpoder:", error);
   }
 }
 
-// Configura a edição do campo de superpoder
 function setupSuperpowerEditing(cardId = "0007-GATA") {
   const superpowerEl = document.querySelector('.editable-field[data-field="superpower"]');
   if (!superpowerEl) return;
@@ -279,7 +409,6 @@ function setupSuperpowerEditing(cardId = "0007-GATA") {
   });
 }
 
-// Salva a nova comida favorita no banco via API
 async function saveCatFavoriteFood(cardId, newFood) {
   try {
     const response = await fetch(`http://127.0.0.1:8000/api/card/${cardId}/favorite_food`, {
@@ -288,13 +417,11 @@ async function saveCatFavoriteFood(cardId, newFood) {
       body: JSON.stringify({ favorite_food: newFood }),
     });
     if (!response.ok) throw new Error("Erro ao salvar a comida favorita no banco");
-    console.log("Comida favorita atualizada com sucesso no PostgreSQL!");
   } catch (error) {
     console.error("Erro ao atualizar a comida favorita:", error);
   }
 }
 
-// Configura a edição do campo de comida favorita
 function setupFavoriteFoodEditing(cardId = "0007-GATA") {
   const foodEl = document.querySelector('.editable-field[data-field="favorite_food"]');
   if (!foodEl) return;
@@ -312,8 +439,11 @@ function setupFavoriteFoodEditing(cardId = "0007-GATA") {
   });
 }
 
-// INICIALIZAÇÃO DA PÁGINA
+// ------------------- INICIALIZAÇÃO DA PÁGINA -------------------
 document.addEventListener("DOMContentLoaded", () => {
+  setupCardNavigation();
+  setupVaccinesSystem();
+  
   loadCardData("0007-GATA");
   setupNameEditing("0007-GATA");
   setupTitleEditing("0007-GATA");
@@ -322,5 +452,5 @@ document.addEventListener("DOMContentLoaded", () => {
   setupColorEditing("0007-GATA");
   setupOwnersEditing("0007-GATA");
   setupSuperpowerEditing("0007-GATA");
-  setupFavoriteFoodEditing("0007-GATA")
+  setupFavoriteFoodEditing("0007-GATA");
 });

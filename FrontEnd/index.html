@@ -1,27 +1,47 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Carteirinha Oficial da Gata</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="CSS/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Carteirinha Oficial da Gata</title>
+
+  <!-- Fontes do Projeto -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap"
+    rel="stylesheet">
+
+  <!-- Estilos CSS (Global + Vacinas) -->
+  <link rel="stylesheet" href="CSS/style.css">
 </head>
+
 <body>
 
-<div class="deco" style="transform:rotate(-10deg);">🐾</div>
+  <!-- Decorações Flutuantes -->
+  <div class="deco" style="transform:rotate(-10deg);">🐾</div>
   <div class="deco">🧶</div>
   <div class="deco" style="transform:rotate(12deg);">🐾</div>
   <div class="deco">🐟</div>
 
   <div>
-    <div class="lanyard"><div class="lanyard-strap"></div></div>
+    <main class="stage">
 
-    <div class="stage">
-      <div class="card" id="card">
-        <!-- FRENTE -->
+      <!-- Abas de Navegação Superior -->
+      <nav class="card-nav">
+        <button type="button" class="nav-btn active" data-page="front">Carteirinha 🐾</button>
+        <button type="button" class="nav-btn" data-page="vaccines">Vacinas 💉</button>
+      </nav>
+
+      <div class="lanyard">
+        <div class="lanyard-strap"></div>
+      </div>
+
+      <!-- CARTÃO PRINCIPAL (3 FACES) -->
+      <div class="card" id="card" data-face="front">
+
+        <!-- 1. FRENTE -->
         <div class="face front">
           <div class="hole"></div>
           <div class="eyebrow">CARTEIRINHA OFICIAL</div>
@@ -41,42 +61,150 @@
           </div>
 
           <div class="cat-name" contenteditable="true" spellcheck="false" title="Clique para editar o Nome"></div>
+
           <div class="cat-title" contenteditable="true" spellcheck="false" title="Clique para editar o Cargo"></div>
 
           <div class="id-row">
             <span class="id-num">ID Nº 0007-GATA</span>
             <span class="stamp">APROVADA</span>
           </div>
-          <div class="flip-hint">👆 toque no cartão para virar</div>
+
+          <div class="flip-hint">
+            👆 toque no cartão para virar
+          </div>
         </div>
 
-        <!-- VERSO -->
+        <!-- 2. VERSO -->
         <div class="face back">
           <div class="hole"></div>
-          <div class="back-title">🐾 Dados Oficiais 🐾</div>
 
-          <div class="field"><span>Raça</span><span class="editable-field" data-field="breed" contenteditable="true" spellcheck="false" title="Clique para editar a raça"></span></div>
-          <div class="field"><span>Nascimento</span><span class="editable-field" data-field="birth_date" contenteditable="true" spellcheck="false" title="Clique para editar a data de nascimento"></span></div>
-          <div class="field"><span>Cor</span><span class="editable-field" data-field="color" contenteditable="true" spellcheck="false" title="Clique para editar a cor"></span></div>
-          <div class="field"><span>Tutor(a) 1</span><span class="editable-field" data-field="owner" contenteditable="true" spellcheck="false" title="Clique para editar o 1° tutor"></span></div>
-          <div class="field"><span>Tutor(a) 2</span><span class="editable-field" data-field="second_owner" contenteditable="true" spellcheck="false" title="Clique para editar o 2° tutor"></span></div>
-          <div class="field"><span>Superpoder</span><span class="editable-field" data-field="superpower" contenteditable="true" spellcheck="false" title="Clique para editar o superpoder"></span></div>
-          <div class="field"><span>Comida fav.</span><span class="editable-field" data-field="favorite_food" contenteditable="true" spellcheck="false" title="Clique para editar a comida favorita"></span></div>
+          <div class="back-title">
+            🐾 Dados Oficiais 🐾
+          </div>
+
+          <div class="field">
+            <span>Raça</span>
+            <span class="editable-field" data-field="breed" contenteditable="true" spellcheck="false"
+              title="Clique para editar a raça"></span>
+          </div>
+
+          <div class="field">
+            <span>Nascimento</span>
+            <span class="editable-field" data-field="birth_date" contenteditable="true" spellcheck="false"
+              title="Clique para editar a data de nascimento"></span>
+          </div>
+
+          <div class="field">
+            <span>Cor</span>
+            <span class="editable-field" data-field="color" contenteditable="true" spellcheck="false"
+              title="Clique para editar a cor"></span>
+          </div>
+
+          <div class="field">
+            <span>Tutor(a) 1</span>
+            <span class="editable-field" data-field="owner" contenteditable="true" spellcheck="false"
+              title="Clique para editar o 1° tutor"></span>
+          </div>
+
+          <div class="field">
+            <span>Tutor(a) 2</span>
+            <span class="editable-field" data-field="second_owner" contenteditable="true" spellcheck="false"
+              title="Clique para editar o 2° tutor"></span>
+          </div>
+
+          <div class="field">
+            <span>Superpoder</span>
+            <span class="editable-field" data-field="superpower" contenteditable="true" spellcheck="false"
+              title="Clique para editar o superpoder"></span>
+          </div>
+
+          <div class="field">
+            <span>Comida fav.</span>
+            <span class="editable-field" data-field="favorite_food" contenteditable="true" spellcheck="false"
+              title="Clique para editar a comida favorita"></span>
+          </div>
 
           <div class="qr"></div>
-          <div class="qr-label">escaneie para ver as travessuras</div>
+          <div class="qr-label">
+            escaneie para ver as travessuras
+          </div>
 
           <div class="sign">
             <span class="sign-label">ASSINATURA</span>
             <span class="paw-print">🐾</span>
           </div>
-        </div>
-      </div>
-    </div>
 
-    <footer>feita com carinho para a gata mais importante da casa 💛</footer>
+        </div>
+        <!-- FIM VERSO -->
+
+        <!-- 3. VACINAS -->
+        <div class="face vaccines-face">
+          <div class="hole"></div>
+
+          <!-- Título Padronizado no estilo do Verso -->
+          <div class="back-title">
+            🐾 Vacinas Aplicadas 🐾
+          </div>
+
+          <!-- Formulário -->
+          <form id="vaccine-form">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="pet-name">Nome</label>
+                <input type="text" id="pet-name" placeholder="Ex: Mimi" required />
+              </div>
+
+              <div class="form-group">
+                <label for="vaccine-date">Data</label>
+                <input type="date" id="vaccine-date" required />
+              </div>
+            </div>
+
+            <div class="form-group margin-top">
+              <label for="vaccine-type">Vacina</label>
+              <select id="vaccine-type" required>
+                <option value="V3 (Tríplice felina)">V3 (Tríplice felina)</option>
+                <option value="V4 (Quadrupla felina)">V4 (Quadrupla felina)</option>
+                <option value="V5 (Quíntupla felina)">V5 (Quíntupla felina)</option>
+                <option value="Raiva (Antirrábica)">Raiva (Antirrábica)</option>
+                <option value="Outra">Outra</option>
+              </select>
+            </div>
+
+            <button type="submit" class="btn-add-vaccine">+ Adicionar vacina</button>
+          </form>
+
+          <hr class="divider" />
+
+          <!-- Histórico -->
+          <div class="history-section">
+            <h3>Histórico</h3>
+
+            <div id="history-list" class="history-list">
+              <p class="empty-msg" id="empty-msg">
+                Nenhuma vacina registrada ainda.<br />
+                Adicione a primeira aí em cima! 🐾
+              </p>
+            </div>
+
+            <button type="button" id="clear-history-btn" class="btn-clear-history">apagar todo o histórico</button>
+          </div>
+        </div>
+        <!-- FIM VACINAS -->
+
+      </div>
+      <!-- FIM CARD -->
+
+    </main>
+
+    <footer class="sub-footer">
+      feita com carinho para a gata mais importante da casa 💛
+    </footer>
+
   </div>
-    
-    <script src="JS/script.js"></script>
+
+  <!-- Scripts -->
+  <script src="JS/script.js"></script>
 </body>
+
 </html>
