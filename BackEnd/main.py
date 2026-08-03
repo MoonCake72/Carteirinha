@@ -1,14 +1,25 @@
-from typing import List
-from fastapi import FastAPI, Depends, HTTPException, Body
+import os
+import shutil
+from typing import List, Optional
+
+from fastapi import FastAPI, Depends, HTTPException, Body, File, UploadFile, Form
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
+
 from database import engine, Base, get_db
 import models, schemas
 
+# Cria a tabela no banco caso ainda não exista
 Base.metadata.create_all(bind=engine)
+
+# Cria o diretório para armazenar os comprovantes caso não exista
+UPLOAD_DIR = "uploads/vaccines"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 app = FastAPI(title="API Carteirinha")
 
+# Configuração do CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -16,6 +27,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Servir os arquivos estáticos de upload
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+
 
 # ------------------- ROTAS DA CARTEIRINHA PET -------------------
 
@@ -171,7 +186,7 @@ def create_card(card: schemas.CatCardBase, db: Session = Depends(get_db)):
 
 # ------------------- ROTAS DE VACINAS -------------------
 
-# 1. Listar vacinas
+# 1. Listar vacinas incluindo photo_url
 @app.get("/api/card/{card_id}/vaccines", response_model=List[schemas.VaccineResponse])
 def get_vaccines(card_id: str, db: Session = Depends(get_db)):
     card = db.query(models.CatCard).filter(models.CatCard.id_number == card_id).first()
@@ -185,22 +200,43 @@ def get_vaccines(card_id: str, db: Session = Depends(get_db)):
             "id": v.id,
             "card_id": v.card_id,
             "date": v.vaccine_date,
-            "type": v.vaccine_type
+            "type": v.vaccine_type,
+            "photo_url": v.photo_url
         } for v in vaccines
     ]
 
-# 2. Adicionar vacina
+# 2. Adicionar vacina aceitando Upload de Imagem (Form Data)
 @app.post("/api/card/{card_id}/vaccines", response_model=schemas.VaccineResponse)
-def add_vaccine(card_id: str, vaccine: schemas.VaccineCreate, db: Session = Depends(get_db)):
+async def add_vaccine(
+    card_id: str,
+    date: str = Form(...),
+    type: str = Form(...),
+    photo: Optional[UploadFile] = File(None),
+    db: Session = Depends(get_db)
+):
     card = db.query(models.CatCard).filter(models.CatCard.id_number == card_id).first()
     if not card:
         raise HTTPException(status_code=404, detail="Carteirinha não encontrada")
 
+    saved_photo_url = None
+
+    # Processa o salvamento do arquivo de imagem enviado
+    if photo and photo.filename:
+        file_extension = os.path.splitext(photo.filename)[1]
+        filename = f"{card_id}_{os.urandom(8).hex()}{file_extension}"
+        file_path = os.path.join(UPLOAD_DIR, filename)
+
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(photo.file, buffer)
+        
+        saved_photo_url = f"http://127.0.0.1:8000/uploads/vaccines/{filename}"
+
     new_vaccine = models.Vaccine(
         card_id=card_id,
-        pet_name=card.name, # Pega o nome do pet direto do card cadastrado no banco (opcional)
-        vaccine_date=vaccine.date.strip(),
-        vaccine_type=vaccine.type.strip()
+        pet_name=card.name,
+        vaccine_date=date.strip(),
+        vaccine_type=type.strip(),
+        photo_url=saved_photo_url
     )
     db.add(new_vaccine)
     db.commit()
@@ -210,7 +246,8 @@ def add_vaccine(card_id: str, vaccine: schemas.VaccineCreate, db: Session = Depe
         "id": new_vaccine.id,
         "card_id": new_vaccine.card_id,
         "date": new_vaccine.vaccine_date,
-        "type": new_vaccine.vaccine_type
+        "type": new_vaccine.vaccine_type,
+        "photo_url": new_vaccine.photo_url
     }
 
 # 3. Remover uma vacina específica

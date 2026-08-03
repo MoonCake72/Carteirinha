@@ -28,6 +28,7 @@ class Vaccine(Base):
     pet_name = Column(String, nullable=False)
     vaccine_date = Column(String, nullable=False)
     vaccine_type = Column(String, nullable=False)
+    photo_url = Column(String, nullable=True)
 
     # Relacionamento de volta para o pet
     card = relationship("CatCard", back_populates="vaccines")

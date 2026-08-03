@@ -56,12 +56,14 @@ function setupCardNavigation() {
   });
 }
 
+// ------------------- LÓGICA DE VACINAS INTEGRADA COM A API -------------------
 function setupVaccinesSystem(cardId = "0007-GATA") {
   const form = document.getElementById("vaccine-form");
   if (!form) return;
 
   const dateInput = document.getElementById("vaccine-date");
   const vaccineTypeSelect = document.getElementById("vaccine-type");
+  const photoInput = document.getElementById("vaccine-photo");
   const historyList = document.getElementById("history-list");
   const emptyMsg = document.getElementById("empty-msg");
   const clearHistoryBtn = document.getElementById("clear-history-btn");
@@ -74,6 +76,7 @@ function setupVaccinesSystem(cardId = "0007-GATA") {
     return `${day}/${month}/${year}`;
   }
 
+  // 1. GET: Carrega vacinas da API do backend
   async function loadVaccines() {
     try {
       const response = await fetch(`http://127.0.0.1:8000/api/card/${cardId}/vaccines`);
@@ -103,10 +106,17 @@ function setupVaccinesSystem(cardId = "0007-GATA") {
     vaccines.forEach((v) => {
       const item = document.createElement("div");
       item.className = "vaccine-item";
+
+      // Se houver URL da foto, exibe o link para visualização
+      const photoLink = v.photo_url 
+        ? `<a href="${v.photo_url}" target="_blank" class="vaccine-photo-link" style="font-size:10px; color:var(--pink-dark); text-decoration:underline; display:block; margin-top:2px;">📷 Ver Comprovante</a>`
+        : '';
+
       item.innerHTML = `
         <div>
           <strong>${v.type}</strong>
           <span>Aplicada em: ${formatDate(v.date)}</span>
+          ${photoLink}
         </div>
         <button type="button" class="btn-delete-item" onclick="removeVaccine(${v.id})">✕</button>
       `;
@@ -114,30 +124,35 @@ function setupVaccinesSystem(cardId = "0007-GATA") {
     });
   }
 
+  // 2. POST: Salva uma nova vacina + foto enviando FormData
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    const newVaccine = {
-      date: dateInput.value,
-      type: vaccineTypeSelect.value,
-    };
+    const formData = new FormData();
+    formData.append("date", dateInput.value);
+    formData.append("type", vaccineTypeSelect.value);
+
+    if (photoInput && photoInput.files[0]) {
+      formData.append("photo", photoInput.files[0]);
+    }
 
     try {
       const response = await fetch(`http://127.0.0.1:8000/api/card/${cardId}/vaccines`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newVaccine),
+        body: formData, // Envia multipart/form-data automaticamente
       });
 
       if (!response.ok) throw new Error("Erro ao salvar vacina");
 
       dateInput.value = "";
-      loadVaccines();
+      if (photoInput) photoInput.value = "";
+      loadVaccines(); // Recarrega do banco
     } catch (error) {
       console.error("Erro ao cadastrar vacina:", error);
     }
   });
 
+  // 3. DELETE: Deleta uma vacina específica
   window.removeVaccine = async function (vaccineId) {
     try {
       const response = await fetch(`http://127.0.0.1:8000/api/card/${cardId}/vaccines/${vaccineId}`, {
@@ -152,6 +167,7 @@ function setupVaccinesSystem(cardId = "0007-GATA") {
     }
   };
 
+  // 4. DELETE ALL: Apaga todo o histórico
   if (clearHistoryBtn) {
     clearHistoryBtn.addEventListener("click", async () => {
       if (confirm("Deseja apagar todo o histórico de vacinas desse pet?")) {

@@ -29,6 +29,7 @@ class VaccineResponse(BaseModel):
     card_id: str
     date: str
     type: str
-
+    photo_url: Optional[str] = None
+    
     class Config:
         from_attributes = True

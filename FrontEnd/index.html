@@ -145,25 +145,31 @@
             🐾 Vacinas Aplicações 🐾
           </div>
 
-          <!-- Formulário sem o campo de Nome -->
-          <form id="vaccine-form">
+          <!-- Formulário com Upload de Comprovante/Foto -->
+          <form id="vaccine-form" enctype="multipart/form-data">
             <div class="form-group">
               <label for="vaccine-date">Data</label>
               <input type="date" id="vaccine-date" required />
             </div>
 
             <div class="form-group margin-top">
-              <label for="vaccine-type">Vacina</label>
+              <label for="vaccine-type">Vacina / Remédio</label>
               <select id="vaccine-type" required>
                 <option value="V3 (Tríplice felina)">V3 (Tríplice felina)</option>
                 <option value="V4 (Quadrupla felina)">V4 (Quadrupla felina)</option>
                 <option value="V5 (Quíntupla felina)">V5 (Quíntupla felina)</option>
                 <option value="Raiva (Antirrábica)">Raiva (Antirrábica)</option>
+                <option value="Vermífugo">Vermífugo</option>
                 <option value="Outra">Outra</option>
               </select>
             </div>
 
-            <button type="submit" class="btn-add-vaccine">+ Adicionar vacina</button>
+            <div class="form-group margin-top">
+              <label for="vaccine-photo">Foto / Comprovante (Opcional)</label>
+              <input type="file" id="vaccine-photo" accept="image/*" />
+            </div>
+
+            <button type="submit" class="btn-add-vaccine">+ Adicionar registro</button>
           </form>
 
           <hr class="divider" />
