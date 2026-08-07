@@ -818,3 +818,10 @@ footer, .sub-footer {
   background: #e03e3e;
   transform: translateY(-1px);
 }
+
+@media (max-width: 768px) {
+    .cat-name {
+        /* Se tiver um font-family aqui, garanta que seja o mesmo! */
+        font-family: 'Fredoka', cursive, sans-serif;
+    }
+}
