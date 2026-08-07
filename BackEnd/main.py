@@ -1,12 +1,10 @@
 import os
 import shutil
 from typing import List, Optional
-
 from fastapi import FastAPI, Depends, HTTPException, Body, File, UploadFile, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
-
 from database import engine, Base, get_db
 import models, schemas
 

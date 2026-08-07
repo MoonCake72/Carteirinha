@@ -1,3 +1,6 @@
+// ------------------- CONFIGURAÇÃO DA API -------------------
+const API_BASE_URL = "https://carteirinha-api.onrender.com";
+
 // ------------------- NAVEGAÇÃO & ROTAÇÃO 3D DO CARTÃO -------------------
 function setupCardNavigation() {
   const card = document.getElementById("card");
@@ -27,8 +30,8 @@ function setupCardNavigation() {
       e.target.closest('select') ||
       e.target.closest('button') ||
       e.target.closest('form') ||
-      e.target.closest('a') || // <-- Adicionado para ignorar links
-      e.target.closest('.vaccine-photo-link') || // <-- Adicionado para o botão do comprovante
+      e.target.closest('a') ||
+      e.target.closest('.vaccine-photo-link') ||
       e.target.closest('.history-list');
 
     if (isInteractive) return;
@@ -111,7 +114,7 @@ function setupVaccinesSystem(cardId = "0007-GATA") {
 
   async function loadVaccines() {
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/card/${cardId}/vaccines`);
+      const response = await fetch(`${API_BASE_URL}/api/card/${cardId}/vaccines`);
       if (!response.ok) throw new Error("Erro ao carregar vacinas do banco");
 
       vaccines = await response.json();
@@ -177,7 +180,7 @@ function setupVaccinesSystem(cardId = "0007-GATA") {
     }
 
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/card/${cardId}/vaccines`, {
+      const response = await fetch(`${API_BASE_URL}/api/card/${cardId}/vaccines`, {
         method: "POST",
         body: formData,
       });
@@ -205,7 +208,7 @@ function setupVaccinesSystem(cardId = "0007-GATA") {
 
   window.removeVaccine = async function (vaccineId) {
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/card/${cardId}/vaccines/${vaccineId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/card/${cardId}/vaccines/${vaccineId}`, {
         method: "DELETE",
       });
 
@@ -248,7 +251,7 @@ function setupVaccinesSystem(cardId = "0007-GATA") {
       closeModal();
 
       try {
-        const response = await fetch(`http://127.0.0.1:8000/api/card/${cardId}/vaccines`, {
+        const response = await fetch(`${API_BASE_URL}/api/card/${cardId}/vaccines`, {
           method: "DELETE",
         });
 
@@ -267,7 +270,7 @@ function setupVaccinesSystem(cardId = "0007-GATA") {
 // ------------------- CARREGAMENTO DE DADOS DA API -------------------
 async function loadCardData(cardId = "0007-GATA") {
   try {
-    const response = await fetch(`http://127.0.0.1:8000/api/card/${cardId}`);
+    const response = await fetch(`${API_BASE_URL}/api/card/${cardId}`);
     if (!response.ok) throw new Error("Erro ao carregar dados do banco");
 
     const data = await response.json();
@@ -304,7 +307,7 @@ async function loadCardData(cardId = "0007-GATA") {
 // ------------------- EDICAO DOS CAMPOS (API PATCH) -------------------
 async function saveCatName(cardId, newName) {
   try {
-    const response = await fetch(`http://127.0.0.1:8000/api/card/${cardId}/name`, {
+    const response = await fetch(`${API_BASE_URL}/api/card/${cardId}/name`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: newName }),
@@ -334,7 +337,7 @@ function setupNameEditing(cardId = "0007-GATA") {
 
 async function saveCatTitle(cardId, newTitle) {
   try {
-    const response = await fetch(`http://127.0.0.1:8000/api/card/${cardId}/title`, {
+    const response = await fetch(`${API_BASE_URL}/api/card/${cardId}/title`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title: newTitle }),
@@ -364,7 +367,7 @@ function setupTitleEditing(cardId = "0007-GATA") {
 
 async function saveCatBreed(cardId, newBreed) {
   try {
-    const response = await fetch(`http://127.0.0.1:8000/api/card/${cardId}/breed`, {
+    const response = await fetch(`${API_BASE_URL}/api/card/${cardId}/breed`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ breed: newBreed }),
@@ -394,7 +397,7 @@ function setupBreedEditing(cardId = "0007-GATA") {
 
 async function saveCatBirthDate(cardId, newBirthDate) {
   try {
-    const response = await fetch(`http://127.0.0.1:8000/api/card/${cardId}/birth_date`, {
+    const response = await fetch(`${API_BASE_URL}/api/card/${cardId}/birth_date`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ birth_date: newBirthDate }),
@@ -424,7 +427,7 @@ function setupBirthDateEditing(cardId = "0007-GATA") {
 
 async function saveCatColor(cardId, newColor) {
   try {
-    const response = await fetch(`http://127.0.0.1:8000/api/card/${cardId}/color`, {
+    const response = await fetch(`${API_BASE_URL}/api/card/${cardId}/color`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ color: newColor }),
@@ -454,7 +457,7 @@ function setupColorEditing(cardId = "0007-GATA") {
 
 async function saveCatOwner(cardId, newOwner) {
   try {
-    await fetch(`http://127.0.0.1:8000/api/card/${cardId}/owner`, {
+    await fetch(`${API_BASE_URL}/api/card/${cardId}/owner`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ owner: newOwner }),
@@ -466,7 +469,7 @@ async function saveCatOwner(cardId, newOwner) {
 
 async function saveCatSecondOwner(cardId, newSecondOwner) {
   try {
-    await fetch(`http://127.0.0.1:8000/api/card/${cardId}/second_owner`, {
+    await fetch(`${API_BASE_URL}/api/card/${cardId}/second_owner`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ second_owner: newSecondOwner }),
@@ -505,7 +508,7 @@ function setupOwnersEditing(cardId = "0007-GATA") {
 
 async function saveCatSuperpower(cardId, newSuperpower) {
   try {
-    const response = await fetch(`http://127.0.0.1:8000/api/card/${cardId}/superpower`, {
+    const response = await fetch(`${API_BASE_URL}/api/card/${cardId}/superpower`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ superpower: newSuperpower }),
@@ -535,7 +538,7 @@ function setupSuperpowerEditing(cardId = "0007-GATA") {
 
 async function saveCatFavoriteFood(cardId, newFood) {
   try {
-    const response = await fetch(`http://127.0.0.1:8000/api/card/${cardId}/favorite_food`, {
+    const response = await fetch(`${API_BASE_URL}/api/card/${cardId}/favorite_food`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ favorite_food: newFood }),
