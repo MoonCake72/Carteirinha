@@ -186,7 +186,7 @@ def create_card(card: schemas.CatCardBase, db: Session = Depends(get_db)):
 
 # ------------------- ROTAS DE VACINAS -------------------
 
-# 1. Listar vacinas incluindo photo_url
+# 1. GET: Listar vacinas incluindo next_date
 @app.get("/api/card/{card_id}/vaccines", response_model=List[schemas.VaccineResponse])
 def get_vaccines(card_id: str, db: Session = Depends(get_db)):
     card = db.query(models.CatCard).filter(models.CatCard.id_number == card_id).first()
@@ -201,16 +201,18 @@ def get_vaccines(card_id: str, db: Session = Depends(get_db)):
             "card_id": v.card_id,
             "date": v.vaccine_date,
             "type": v.vaccine_type,
+            "next_date": v.next_date,
             "photo_url": v.photo_url
         } for v in vaccines
     ]
 
-# 2. Adicionar vacina aceitando Upload de Imagem (Form Data)
+# 2. POST: Adicionar vacina recebendo next_date
 @app.post("/api/card/{card_id}/vaccines", response_model=schemas.VaccineResponse)
 async def add_vaccine(
     card_id: str,
     date: str = Form(...),
     type: str = Form(...),
+    next_date: Optional[str] = Form(None),  # <-- Recebe a próxima data (ou None)
     photo: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db)
 ):
@@ -220,7 +222,6 @@ async def add_vaccine(
 
     saved_photo_url = None
 
-    # Processa o salvamento do arquivo de imagem enviado
     if photo and photo.filename:
         file_extension = os.path.splitext(photo.filename)[1]
         filename = f"{card_id}_{os.urandom(8).hex()}{file_extension}"
@@ -236,6 +237,7 @@ async def add_vaccine(
         pet_name=card.name,
         vaccine_date=date.strip(),
         vaccine_type=type.strip(),
+        next_date=next_date.strip() if next_date else None,
         photo_url=saved_photo_url
     )
     db.add(new_vaccine)
@@ -247,6 +249,7 @@ async def add_vaccine(
         "card_id": new_vaccine.card_id,
         "date": new_vaccine.vaccine_date,
         "type": new_vaccine.vaccine_type,
+        "next_date": new_vaccine.next_date,
         "photo_url": new_vaccine.photo_url
     }
 

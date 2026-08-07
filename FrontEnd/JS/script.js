@@ -20,12 +20,15 @@ function setupCardNavigation() {
 
   // 1. Clique no cartão para ciclar entre FRENTE -> VERSO -> VACINAS -> FRENTE
   card.addEventListener("click", (e) => {
-    // Evita disparar a rotação ao clicar em elementos interativos
+    // Evita disparar a rotação ao clicar em elementos interativos, formulários ou links de comprovante
     const isInteractive = e.target.closest('[contenteditable="true"]') ||
       e.target.closest('.editable-field') ||
       e.target.closest('input') ||
       e.target.closest('select') ||
       e.target.closest('button') ||
+      e.target.closest('form') ||
+      e.target.closest('a') || // <-- Adicionado para ignorar links
+      e.target.closest('.vaccine-photo-link') || // <-- Adicionado para o botão do comprovante
       e.target.closest('.history-list');
 
     if (isInteractive) return;
@@ -56,17 +59,29 @@ function setupCardNavigation() {
   });
 }
 
-// ------------------- LÓGICA DE VACINAS INTEGRADA COM A API -------------------
 function setupVaccinesSystem(cardId = "0007-GATA") {
   const form = document.getElementById("vaccine-form");
   if (!form) return;
 
   const dateInput = document.getElementById("vaccine-date");
   const vaccineTypeSelect = document.getElementById("vaccine-type");
+  const nextDateInput = document.getElementById("next-vaccine-date");
+  const noNextDateCheckbox = document.getElementById("no-next-date");
   const photoInput = document.getElementById("vaccine-photo");
   const historyList = document.getElementById("history-list");
   const emptyMsg = document.getElementById("empty-msg");
   const clearHistoryBtn = document.getElementById("clear-history-btn");
+
+  // Elementos do Modal Customizado
+  const modal = document.getElementById("custom-modal");
+  const modalConfirmBtn = document.getElementById("modal-confirm-btn");
+  const modalCancelBtn = document.getElementById("modal-cancel-btn");
+
+  // Pega o botão de submit do formulário para bloquear a rotação no clique
+  const submitBtn = form.querySelector('button[type="submit"]');
+  if (submitBtn) {
+    submitBtn.addEventListener("click", (e) => e.stopPropagation());
+  }
 
   let vaccines = [];
 
@@ -76,7 +91,24 @@ function setupVaccinesSystem(cardId = "0007-GATA") {
     return `${day}/${month}/${year}`;
   }
 
-  // 1. GET: Carrega vacinas da API do backend
+  // Desabilita/Habilita o campo de data quando marca a flag "Não se aplica"
+  if (noNextDateCheckbox && nextDateInput) {
+    noNextDateCheckbox.addEventListener("change", (e) => {
+      e.stopPropagation();
+      if (noNextDateCheckbox.checked) {
+        nextDateInput.value = "";
+        nextDateInput.disabled = true;
+      } else {
+        nextDateInput.disabled = false;
+      }
+    });
+  }
+
+  // Evita que interações no campo de upload girem o cartão
+  if (photoInput) {
+    photoInput.addEventListener("click", (e) => e.stopPropagation());
+  }
+
   async function loadVaccines() {
     try {
       const response = await fetch(`http://127.0.0.1:8000/api/card/${cardId}/vaccines`);
@@ -107,30 +139,38 @@ function setupVaccinesSystem(cardId = "0007-GATA") {
       const item = document.createElement("div");
       item.className = "vaccine-item";
 
-      // Se houver URL da foto, exibe o link para visualização
-      const photoLink = v.photo_url 
-        ? `<a href="${v.photo_url}" target="_blank" class="vaccine-photo-link" style="font-size:10px; color:var(--pink-dark); text-decoration:underline; display:block; margin-top:2px;">📷 Ver Comprovante</a>`
+      const photoLink = v.photo_url
+        ? `<a href="${v.photo_url}" target="_blank" class="vaccine-photo-link" style="font-size:10px; color:var(--pink-dark); text-decoration:underline; display:block; margin-top:2px;" onclick="event.stopPropagation()">📷 Ver Comprovante</a>`
+        : '';
+
+      const nextDateText = v.next_date
+        ? `<span style="display:block; color: #d9534f; font-weight: 700; font-size: 11px;">🔔 Próxima: ${formatDate(v.next_date)}</span>`
         : '';
 
       item.innerHTML = `
         <div>
           <strong>${v.type}</strong>
           <span>Aplicada em: ${formatDate(v.date)}</span>
+          ${nextDateText}
           ${photoLink}
         </div>
-        <button type="button" class="btn-delete-item" onclick="removeVaccine(${v.id})">✕</button>
+        <button type="button" class="btn-delete-item" onclick="event.stopPropagation(); removeVaccine(${v.id})">✕</button>
       `;
       historyList.appendChild(item);
     });
   }
 
-  // 2. POST: Salva uma nova vacina + foto enviando FormData
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
+    e.stopPropagation();
 
     const formData = new FormData();
     formData.append("date", dateInput.value);
     formData.append("type", vaccineTypeSelect.value);
+
+    if (!noNextDateCheckbox.checked && nextDateInput.value) {
+      formData.append("next_date", nextDateInput.value);
+    }
 
     if (photoInput && photoInput.files[0]) {
       formData.append("photo", photoInput.files[0]);
@@ -139,20 +179,30 @@ function setupVaccinesSystem(cardId = "0007-GATA") {
     try {
       const response = await fetch(`http://127.0.0.1:8000/api/card/${cardId}/vaccines`, {
         method: "POST",
-        body: formData, // Envia multipart/form-data automaticamente
+        body: formData,
       });
 
       if (!response.ok) throw new Error("Erro ao salvar vacina");
 
+      // Reseta o formulário
       dateInput.value = "";
+      nextDateInput.value = "";
+      nextDateInput.disabled = false;
+      noNextDateCheckbox.checked = false;
       if (photoInput) photoInput.value = "";
-      loadVaccines(); // Recarrega do banco
+
+      const card = document.getElementById("card");
+
+      console.log("ANTES:", card.dataset.face);
+
+      await loadVaccines();
+
+      console.log("DEPOIS:", card.dataset.face);
     } catch (error) {
       console.error("Erro ao cadastrar vacina:", error);
     }
   });
 
-  // 3. DELETE: Deleta uma vacina específica
   window.removeVaccine = async function (vaccineId) {
     try {
       const response = await fetch(`http://127.0.0.1:8000/api/card/${cardId}/vaccines/${vaccineId}`, {
@@ -167,21 +217,46 @@ function setupVaccinesSystem(cardId = "0007-GATA") {
     }
   };
 
-  // 4. DELETE ALL: Apaga todo o histórico
+  // ---------------- LÓGICA DO MODAL CUSTOMIZADO ----------------
+  const openModal = () => modal?.classList.remove("hidden");
+  const closeModal = () => modal?.classList.add("hidden");
+
   if (clearHistoryBtn) {
-    clearHistoryBtn.addEventListener("click", async () => {
-      if (confirm("Deseja apagar todo o histórico de vacinas desse pet?")) {
-        try {
-          const response = await fetch(`http://127.0.0.1:8000/api/card/${cardId}/vaccines`, {
-            method: "DELETE",
-          });
+    clearHistoryBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      openModal();
+    });
+  }
 
-          if (!response.ok) throw new Error("Erro ao apagar histórico");
+  if (modalCancelBtn) {
+    modalCancelBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      closeModal();
+    });
+  }
 
-          loadVaccines();
-        } catch (error) {
-          console.error("Erro ao apagar histórico de vacinas:", error);
-        }
+  if (modal) {
+    modal.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (e.target === modal) closeModal();
+    });
+  }
+
+  if (modalConfirmBtn) {
+    modalConfirmBtn.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      closeModal();
+
+      try {
+        const response = await fetch(`http://127.0.0.1:8000/api/card/${cardId}/vaccines`, {
+          method: "DELETE",
+        });
+
+        if (!response.ok) throw new Error("Erro ao apagar histórico");
+
+        loadVaccines();
+      } catch (error) {
+        console.error("Erro ao apagar histórico de vacinas:", error);
       }
     });
   }
