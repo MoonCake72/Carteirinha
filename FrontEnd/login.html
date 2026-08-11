@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entrar — Carteirinha Pet</title>
+
+    <!-- Fontes do Google -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Arquivo de Estilo CSS -->
+    <link rel="stylesheet" href="CSS/login.css">
+</head>
+
+<body>
+
+    <!-- Elementos Decorativos Flutuantes -->
+    <div class="deco" style="transform:rotate(-10deg);">🐾</div>
+    <div class="deco">🧶</div>
+    <div class="deco" style="transform:rotate(10deg);">🐾</div>
+    <div class="deco">🐟</div>
+
+    <div>
+        <div class="panel">
+            <!-- Bloco Principal de Login -->
+            <div id="login-block">
+
+                <!-- Título com Destaque Maior -->
+                <div class="header-title">
+                    <h1>Carteirinha 🐾</h1>
+                </div>
+
+                <form id="login-form" novalidate>
+                    <div>
+                        <label for="email">E-mail</label>
+                        <input type="email" id="email" placeholder="voce@email.com" required>
+                    </div>
+
+                    <div>
+                        <label for="senha">Senha</label>
+                        <div class="input-wrap">
+                            <input type="password" id="senha" placeholder="••••••••" required minlength="4"
+                                style="padding-right:38px;">
+                            <button type="button" class="toggle-eye" id="toggle-eye"
+                                aria-label="Mostrar senha"></button>
+                        </div>
+                    </div>
+
+                    <div class="row-between">
+                        <label class="remember">
+                            <input type="checkbox" id="lembrar">
+                            lembrar de mim
+                        </label>
+                        <a class="link" id="forgot-link">esqueceu a senha?</a>
+                    </div>
+
+                    <div class="error-msg" id="error-msg"></div>
+
+                    <button type="submit" class="btn-primary" id="submit-btn">Entrar</button>
+                </form>
+
+                <div class="divider-row">
+                    <hr><span>ou</span>
+                    <hr>
+                </div>
+
+                <button type="button" class="btn-secondary" id="signup-btn">Criar uma conta</button>
+            </div>
+
+            <!-- Bloco de Sucesso (Exibido após login) -->
+            <div id="success-block" class="hidden">
+                <div class="success-wrap">
+                    <div class="paw">🐾</div>
+                    <p>Bem-vindo(a) de volta!</p>
+                </div>
+            </div>
+        </div>
+
+        <footer>Feito com carinho para tutores</footer>
+    </div>
+
+    <!-- Arquivo de Comportamento JavaScript -->
+    <script src="JS/login.js"></script>
+</body>
+
+</html>
