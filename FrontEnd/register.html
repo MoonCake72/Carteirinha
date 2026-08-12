@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Criar Conta — Carteirinha Pet</title>
+  
+  <!-- Fontes do Google -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Arquivo de Estilo CSS Reutilizado -->
+  <link rel="stylesheet" href="CSS/register.css">
+</head>
+<body>
+
+  <!-- Elementos Decorativos Flutuantes -->
+  <div class="deco" style="transform:rotate(-10deg);">🐾</div>
+  <div class="deco">🧶</div>
+  <div class="deco" style="transform:rotate(10deg);">🐾</div>
+  <div class="deco">🐟</div>
+
+  <div>
+    <div class="panel">
+      <!-- Bloco Principal de Cadastro -->
+      <div id="login-block">
+        
+        <!-- Título -->
+        <div class="header-title">
+          <h1>Criar Conta 🐾</h1>
+          <p class="subtitle">cadastre-se para criar a carteirinha do seu pet</p>
+        </div>
+
+        <form id="register-form" novalidate>
+          <div>
+            <label for="nome">Seu Nome (Tutor)</label>
+            <input type="text" id="nome" placeholder="Seu nome completo" required>
+          </div>
+
+          <div>
+            <label for="email">E-mail</label>
+            <input type="email" id="email" placeholder="voce@email.com" required>
+          </div>
+
+          <div>
+            <label for="senha">Senha</label>
+            <div class="input-wrap">
+              <input type="password" id="senha" placeholder="••••••••" required minlength="4">
+              <button type="button" class="toggle-eye" id="toggle-eye-1" aria-label="Mostrar senha"></button>
+            </div>
+          </div>
+
+          <div>
+            <label for="confirmar-senha">Confirmar Senha</label>
+            <div class="input-wrap">
+              <input type="password" id="confirmar-senha" placeholder="••••••••" required minlength="4">
+              <button type="button" class="toggle-eye" id="toggle-eye-2" aria-label="Mostrar senha"></button>
+            </div>
+          </div>
+
+          <div class="error-msg" id="error-msg"></div>
+
+          <button type="submit" class="btn-primary" id="submit-btn">Cadastrar 🐾</button>
+        </form>
+
+        <div class="divider-row"><hr><span>ou</span><hr></div>
+
+        <a href="login.html" class="btn-secondary" id="login-link">Já tenho uma conta</a>
+      </div>
+
+      <!-- Bloco de Sucesso (Exibido após cadastro) -->
+      <div id="success-block" class="hidden">
+        <div class="success-wrap">
+          <div class="paw">🐾</div>
+          <p>Conta criada com sucesso!</p>
+        </div>
+      </div>
+    </div>
+
+    <footer>Feito com carinho para tutores</footer>
+  </div>
+
+  <!-- Arquivo de Comportamento JavaScript -->
+  <script src="JS/register.js"></script>
+</body>
+</html>
