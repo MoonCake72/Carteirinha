@@ -44,6 +44,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     try {
       // Faz a requisição POST para a API FastAPI
+      // Para testes locais com FastAPI acesse 'http://127.0.0.1:8000/api/auth/login'. 
+      // Em produção no Render, altere para 'https://carteirinha-api.onrender.com/api/auth/login'
       const response = await fetch('https://carteirinha-api.onrender.com/api/auth/login', {
         method: 'POST',
         headers: {

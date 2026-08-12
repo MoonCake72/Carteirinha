@@ -58,6 +58,8 @@ document.addEventListener('DOMContentLoaded', () => {
     submitBtn.textContent = 'Criando conta...';
 
     try {
+      // Para testes locais const response = await fetch('http://127.0.0.1:8000/api/auth/register'. 
+      // Em produção no Render,const response = await fetch('https://carteirinha-api.onrender.com/api/auth/register'
       const response = await fetch('https://carteirinha-api.onrender.com/api/auth/register', {
         method: 'POST',
         headers: {

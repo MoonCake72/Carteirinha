@@ -3,13 +3,13 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-# Pega a URL enviada pelo Render (ou usa o Docker local como reserva)
+# Conexão apontando diretamente para o banco de dados de produção no Render
 SQLALCHEMY_DATABASE_URL = os.getenv(
     "DATABASE_URL", 
-    "postgresql://postgres:Projeto_carteirinha@localhost:5432/db_carteirinha"
+    "postgresql://postgress:axQNLyuOyfrT5mFR34z30406Me8qlvTP@dpg-d9qu90p42hec73f1vcog-a.oregon-postgres.render.com/db_carteirinha_57p1"
 )
 
-# O Render costuma enviar "postgres://", mas o SQLAlchemy 2.0 exige "postgresql://"
+# Garante a compatibilidade da string com o SQLAlchemy 2.0
 if SQLALCHEMY_DATABASE_URL.startswith("postgres://"):
     SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgres://", "postgresql://", 1)
 

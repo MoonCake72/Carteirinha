@@ -1,5 +1,5 @@
 // ------------------- CONFIGURAÇÃO DA API -------------------
-// Para testes locais com FastAPI acesse 127.0.0.1:8000. 
+// Para testes locais com FastAPI acesse "http://127.0.0.1:8000". 
 // Em produção no Render, altere para "https://carteirinha-api.onrender.com"
 const API_BASE_URL = "https://carteirinha-api.onrender.com";
 
