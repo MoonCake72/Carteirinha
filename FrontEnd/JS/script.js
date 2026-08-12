@@ -1,5 +1,10 @@
 // ------------------- CONFIGURAÇÃO DA API -------------------
+// Para testes locais com FastAPI acesse 127.0.0.1:8000. 
+// Em produção no Render, altere para "https://carteirinha-api.onrender.com"
 const API_BASE_URL = "https://carteirinha-api.onrender.com";
+
+// Variable global para armazenar o ID do cartão carregado
+let currentCardId = null;
 
 // ------------------- NAVEGAÇÃO & ROTAÇÃO 3D DO CARTÃO -------------------
 function setupCardNavigation() {
@@ -12,7 +17,6 @@ function setupCardNavigation() {
   const updateNavButtons = (face) => {
     navButtons.forEach((btn) => {
       const targetPage = btn.getAttribute("data-page");
-      // Mapeia 'front' e 'back' para o botão de Carteirinha
       if ((targetPage === "front" && (face === "front" || face === "back")) || targetPage === face) {
         btn.classList.add("active");
       } else {
@@ -23,7 +27,6 @@ function setupCardNavigation() {
 
   // 1. Clique no cartão para ciclar entre FRENTE -> VERSO -> VACINAS -> FRENTE
   card.addEventListener("click", (e) => {
-    // Evita disparar a rotação ao clicar em elementos interativos, formulários ou links de comprovante
     const isInteractive = e.target.closest('[contenteditable="true"]') ||
       e.target.closest('.editable-field') ||
       e.target.closest('input') ||
@@ -62,7 +65,8 @@ function setupCardNavigation() {
   });
 }
 
-function setupVaccinesSystem(cardId = "0007-GATA") {
+// ------------------- SISTEMA DE VACINAS -------------------
+function setupVaccinesSystem(cardId) {
   const form = document.getElementById("vaccine-form");
   if (!form) return;
 
@@ -75,12 +79,10 @@ function setupVaccinesSystem(cardId = "0007-GATA") {
   const emptyMsg = document.getElementById("empty-msg");
   const clearHistoryBtn = document.getElementById("clear-history-btn");
 
-  // Elementos do Modal Customizado
   const modal = document.getElementById("custom-modal");
   const modalConfirmBtn = document.getElementById("modal-confirm-btn");
   const modalCancelBtn = document.getElementById("modal-cancel-btn");
 
-  // Pega o botão de submit do formulário para bloquear a rotação no clique
   const submitBtn = form.querySelector('button[type="submit"]');
   if (submitBtn) {
     submitBtn.addEventListener("click", (e) => e.stopPropagation());
@@ -94,7 +96,6 @@ function setupVaccinesSystem(cardId = "0007-GATA") {
     return `${day}/${month}/${year}`;
   }
 
-  // Desabilita/Habilita o campo de data quando marca a flag "Não se aplica"
   if (noNextDateCheckbox && nextDateInput) {
     noNextDateCheckbox.addEventListener("change", (e) => {
       e.stopPropagation();
@@ -107,7 +108,6 @@ function setupVaccinesSystem(cardId = "0007-GATA") {
     });
   }
 
-  // Evita que interações no campo de upload girem o cartão
   if (photoInput) {
     photoInput.addEventListener("click", (e) => e.stopPropagation());
   }
@@ -163,7 +163,7 @@ function setupVaccinesSystem(cardId = "0007-GATA") {
     });
   }
 
-  form.addEventListener("submit", async (e) => {
+  form.onsubmit = async (e) => {
     e.preventDefault();
     e.stopPropagation();
 
@@ -187,24 +187,17 @@ function setupVaccinesSystem(cardId = "0007-GATA") {
 
       if (!response.ok) throw new Error("Erro ao salvar vacina");
 
-      // Reseta o formulário
       dateInput.value = "";
       nextDateInput.value = "";
       nextDateInput.disabled = false;
       noNextDateCheckbox.checked = false;
       if (photoInput) photoInput.value = "";
 
-      const card = document.getElementById("card");
-
-      console.log("ANTES:", card.dataset.face);
-
       await loadVaccines();
-
-      console.log("DEPOIS:", card.dataset.face);
     } catch (error) {
       console.error("Erro ao cadastrar vacina:", error);
     }
-  });
+  };
 
   window.removeVaccine = async function (vaccineId) {
     try {
@@ -220,33 +213,32 @@ function setupVaccinesSystem(cardId = "0007-GATA") {
     }
   };
 
-  // ---------------- LÓGICA DO MODAL CUSTOMIZADO ----------------
   const openModal = () => modal?.classList.remove("hidden");
   const closeModal = () => modal?.classList.add("hidden");
 
   if (clearHistoryBtn) {
-    clearHistoryBtn.addEventListener("click", (e) => {
+    clearHistoryBtn.onclick = (e) => {
       e.stopPropagation();
       openModal();
-    });
+    };
   }
 
   if (modalCancelBtn) {
-    modalCancelBtn.addEventListener("click", (e) => {
+    modalCancelBtn.onclick = (e) => {
       e.stopPropagation();
       closeModal();
-    });
+    };
   }
 
   if (modal) {
-    modal.addEventListener("click", (e) => {
+    modal.onclick = (e) => {
       e.stopPropagation();
       if (e.target === modal) closeModal();
-    });
+    };
   }
 
   if (modalConfirmBtn) {
-    modalConfirmBtn.addEventListener("click", async (e) => {
+    modalConfirmBtn.onclick = async (e) => {
       e.stopPropagation();
       closeModal();
 
@@ -261,50 +253,78 @@ function setupVaccinesSystem(cardId = "0007-GATA") {
       } catch (error) {
         console.error("Erro ao apagar histórico de vacinas:", error);
       }
-    });
+    };
   }
 
   loadVaccines();
 }
 
-// ------------------- CARREGAMENTO DE DADOS DA API -------------------
-async function loadCardData(cardId = "0007-GATA") {
+// ------------------- CARREGAMENTO AUTENTICADO DA API -------------------
+async function loadMyCatCard() {
+  const token = localStorage.getItem("pet_token");
+
+  // Se não houver token, redireciona o usuário para a tela de login
+  if (!token) {
+    window.location.href = "login.html";
+    return null;
+  }
+
   try {
-    const response = await fetch(`${API_BASE_URL}/api/card/${cardId}`);
-    if (!response.ok) throw new Error("Erro ao carregar dados do banco");
+    const response = await fetch(`${API_BASE_URL}/api/my-card`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      }
+    });
+
+    if (response.status === 401) {
+      // Token expirou ou é inválido
+      localStorage.removeItem("pet_token");
+      window.location.href = "login.html";
+      return null;
+    }
+
+    if (!response.ok) throw new Error("Erro ao carregar dados do usuário logado");
 
     const data = await response.json();
 
-    // Preenche a FRENTE
+    // Atualiza o ID global do cartão para as edições
+    currentCardId = data.id_number;
+
+    // Preenche os campos na FRENTE do cartão
     const nameEl = document.querySelector(".cat-name");
-    if (nameEl) nameEl.textContent = data.name;
+    if (nameEl) nameEl.textContent = data.name || "Clique para editar o Nome";
 
     const titleEl = document.querySelector(".cat-title");
-    if (titleEl) titleEl.textContent = data.title;
+    if (titleEl) titleEl.textContent = data.title || "Clique para editar o Cargo/Apelido";
 
     const idEl = document.querySelector(".id-num");
     if (idEl) idEl.textContent = `ID Nº ${data.id_number}`;
 
-    // Helper para preencher os campos editáveis do verso pelo atributo data-field
-    const setFieldValue = (field, val) => {
+    // Helper para preencher os campos do verso
+    const setFieldValue = (field, val, defaultText) => {
       const el = document.querySelector(`.editable-field[data-field="${field}"]`);
-      if (el) el.textContent = val !== undefined && val !== null && val !== "" ? val : (field === "second_owner" ? "Opcional" : "");
+      if (el) el.textContent = val !== undefined && val !== null && val !== "" ? val : defaultText;
     };
 
-    setFieldValue("breed", data.breed);
-    setFieldValue("birth_date", data.birth_date);
-    setFieldValue("color", data.color);
-    setFieldValue("owner", data.owner);
-    setFieldValue("second_owner", data.second_owner);
-    setFieldValue("superpower", data.superpower);
-    setFieldValue("favorite_food", data.favorite_food);
+    setFieldValue("breed", data.breed, "SRD (Sem Raça)");
+    setFieldValue("birth_date", data.birth_date, "Clique p/ informar data");
+    setFieldValue("color", data.color, "Clique p/ informar a cor");
+    setFieldValue("owner", data.owner, "Tutor Principal");
+    setFieldValue("second_owner", data.second_owner, "Opcional");
+    setFieldValue("superpower", data.superpower, "Clique p/ informar superpoder");
+    setFieldValue("favorite_food", data.favorite_food, "Clique p/ informar comida favorita");
+
+    return currentCardId;
 
   } catch (error) {
     console.error("Erro na integração:", error);
+    return null;
   }
 }
 
-// ------------------- EDICAO DOS CAMPOS (API PATCH) -------------------
+// ------------------- EDIÇÃO DOS CAMPOS (API PATCH) -------------------
 async function saveCatName(cardId, newName) {
   try {
     const response = await fetch(`${API_BASE_URL}/api/card/${cardId}/name`, {
@@ -318,7 +338,7 @@ async function saveCatName(cardId, newName) {
   }
 }
 
-function setupNameEditing(cardId = "0007-GATA") {
+function setupNameEditing(cardId) {
   const nameEl = document.querySelector(".cat-name");
   if (!nameEl) return;
 
@@ -348,7 +368,7 @@ async function saveCatTitle(cardId, newTitle) {
   }
 }
 
-function setupTitleEditing(cardId = "0007-GATA") {
+function setupTitleEditing(cardId) {
   const titleEl = document.querySelector(".cat-title");
   if (!titleEl) return;
 
@@ -378,7 +398,7 @@ async function saveCatBreed(cardId, newBreed) {
   }
 }
 
-function setupBreedEditing(cardId = "0007-GATA") {
+function setupBreedEditing(cardId) {
   const breedEl = document.querySelector('.editable-field[data-field="breed"]');
   if (!breedEl) return;
 
@@ -408,7 +428,7 @@ async function saveCatBirthDate(cardId, newBirthDate) {
   }
 }
 
-function setupBirthDateEditing(cardId = "0007-GATA") {
+function setupBirthDateEditing(cardId) {
   const birthEl = document.querySelector('.editable-field[data-field="birth_date"]');
   if (!birthEl) return;
 
@@ -438,7 +458,7 @@ async function saveCatColor(cardId, newColor) {
   }
 }
 
-function setupColorEditing(cardId = "0007-GATA") {
+function setupColorEditing(cardId) {
   const colorEl = document.querySelector('.editable-field[data-field="color"]');
   if (!colorEl) return;
 
@@ -479,7 +499,7 @@ async function saveCatSecondOwner(cardId, newSecondOwner) {
   }
 }
 
-function setupOwnersEditing(cardId = "0007-GATA") {
+function setupOwnersEditing(cardId) {
   const owner1El = document.querySelector('.editable-field[data-field="owner"]');
   const owner2El = document.querySelector('.editable-field[data-field="second_owner"]');
 
@@ -519,7 +539,7 @@ async function saveCatSuperpower(cardId, newSuperpower) {
   }
 }
 
-function setupSuperpowerEditing(cardId = "0007-GATA") {
+function setupSuperpowerEditing(cardId) {
   const superpowerEl = document.querySelector('.editable-field[data-field="superpower"]');
   if (!superpowerEl) return;
 
@@ -549,7 +569,7 @@ async function saveCatFavoriteFood(cardId, newFood) {
   }
 }
 
-function setupFavoriteFoodEditing(cardId = "0007-GATA") {
+function setupFavoriteFoodEditing(cardId) {
   const foodEl = document.querySelector('.editable-field[data-field="favorite_food"]');
   if (!foodEl) return;
 
@@ -567,19 +587,23 @@ function setupFavoriteFoodEditing(cardId = "0007-GATA") {
 }
 
 // ------------------- INICIALIZAÇÃO DA PÁGINA -------------------
-document.addEventListener("DOMContentLoaded", () => {
-  const CURRENT_CARD_ID = "0007-GATA";
-
+document.addEventListener("DOMContentLoaded", async () => {
   setupCardNavigation();
-  setupVaccinesSystem(CURRENT_CARD_ID);
 
-  loadCardData(CURRENT_CARD_ID);
-  setupNameEditing(CURRENT_CARD_ID);
-  setupTitleEditing(CURRENT_CARD_ID);
-  setupBreedEditing(CURRENT_CARD_ID);
-  setupBirthDateEditing(CURRENT_CARD_ID);
-  setupColorEditing(CURRENT_CARD_ID);
-  setupOwnersEditing(CURRENT_CARD_ID);
-  setupSuperpowerEditing(CURRENT_CARD_ID);
-  setupFavoriteFoodEditing(CURRENT_CARD_ID);
+  // Busca a carteirinha vinculada ao usuário autenticado
+  const cardId = await loadMyCatCard();
+
+  if (cardId) {
+    // Configura o sistema de vacinas e as edições inline com o ID retornado dinamicamente
+    setupVaccinesSystem(cardId);
+
+    setupNameEditing(cardId);
+    setupTitleEditing(cardId);
+    setupBreedEditing(cardId);
+    setupBirthDateEditing(cardId);
+    setupColorEditing(cardId);
+    setupOwnersEditing(cardId);
+    setupSuperpowerEditing(cardId);
+    setupFavoriteFoodEditing(cardId);
+  }
 });

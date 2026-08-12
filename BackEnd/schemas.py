@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from typing import Optional
 
 # --- SCHEMAS DO CARTÃO PET ---
@@ -34,3 +34,20 @@ class VaccineResponse(BaseModel):
     
     class Config:
         from_attributes = True
+    
+# --- SCHEMAS DE PARA CADASTRO DE USUÁRIOS ---
+class UserCreate(BaseModel):
+    name: str
+    email: str
+    password: str
+
+# Schema para login
+class UserLogin(BaseModel):
+    email: str
+    password: str
+
+# Schema de resposta após login
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+    user_name: str

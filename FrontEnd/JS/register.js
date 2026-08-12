@@ -29,22 +29,27 @@ document.addEventListener('DOMContentLoaded', () => {
   setupEyeToggle('toggle-eye-1', senhaInput);
   setupEyeToggle('toggle-eye-2', confirmSenhaInput);
 
-  // Validação e Envio
-  form.addEventListener('submit', (ev) => {
+  // Envio de Cadastro para a API
+  form.addEventListener('submit', async (ev) => {
     ev.preventDefault();
     errorMsg.textContent = '';
 
-    if (!nomeInput.value.trim() || !emailInput.value.trim() || !senhaInput.value || !confirmSenhaInput.value) {
+    const name = nomeInput.value.trim();
+    const email = emailInput.value.trim();
+    const password = senhaInput.value;
+    const confirmPassword = confirmSenhaInput.value;
+
+    if (!name || !email || !password || !confirmPassword) {
       errorMsg.textContent = 'preencha todos os campos pra continuar';
       return;
     }
 
-    if (senhaInput.value.length < 4) {
+    if (password.length < 4) {
       errorMsg.textContent = 'a senha precisa ter pelo menos 4 caracteres';
       return;
     }
 
-    if (senhaInput.value !== confirmSenhaInput.value) {
+    if (password !== confirmPassword) {
       errorMsg.textContent = 'as senhas não coincidem!';
       return;
     }
@@ -52,14 +57,33 @@ document.addEventListener('DOMContentLoaded', () => {
     submitBtn.disabled = true;
     submitBtn.textContent = 'Criando conta...';
 
-    // Simulação - Redireciona para o login após criar
-    setTimeout(() => {
+    try {
+      const response = await fetch('https://carteirinha-api.onrender.com/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ name, email, password })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.detail || 'Erro ao criar conta');
+      }
+
+      // Exibe feedback de sucesso e envia o usuário para o login
       loginBlock.classList.add('hidden');
       successBlock.classList.remove('hidden');
 
       setTimeout(() => {
         window.location.href = 'login.html';
       }, 1200);
-    }, 500);
+
+    } catch (error) {
+      errorMsg.textContent = error.message;
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Cadastrar 🐾';
+    }
   });
 });

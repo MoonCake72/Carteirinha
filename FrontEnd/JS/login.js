@@ -26,32 +26,55 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Validação e Envio do Formulário
-  form.addEventListener('submit', (ev) => {
+  // Validação e Envio do Formulário para a API
+  form.addEventListener('submit', async (ev) => {
     ev.preventDefault();
     errorMsg.textContent = '';
 
-    if (!emailInput.value.trim() || !senhaInput.value) {
-      errorMsg.textContent = 'preencha e-mail e senha pra continuar';
-      return;
-    }
+    const email = emailInput.value.trim();
+    const password = senhaInput.value;
 
-    if (senhaInput.value.length < 4) {
-      errorMsg.textContent = 'a senha precisa ter pelo menos 4 caracteres';
+    if (!email || !password) {
+      errorMsg.textContent = 'preencha e-mail e senha pra continuar';
       return;
     }
 
     submitBtn.disabled = true;
     submitBtn.textContent = 'Entrando...';
 
-    // Simulação de login - Redireciona para a carteirinha (index.html)
-    setTimeout(() => {
+    try {
+      // Faz a requisição POST para a API FastAPI
+      const response = await fetch('https://carteirinha-api.onrender.com/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email, password })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.detail || 'Falha ao realizar login');
+      }
+
+      // Salva o Token JWT e o nome do tutor no navegador para manter a sessão
+      localStorage.setItem('pet_token', data.access_token);
+      localStorage.setItem('tutor_name', data.user_name);
+
+      // Exibe tela de sucesso e redireciona para a carteirinha
       loginBlock.classList.add('hidden');
       successBlock.classList.remove('hidden');
 
       setTimeout(() => {
         window.location.href = 'index.html';
       }, 900);
-    }, 500);
+
+    } catch (error) {
+      errorMsg.textContent = error.message;
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Entrar 🐾';
+    }
   });
 
   // Links auxiliares
