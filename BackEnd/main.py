@@ -389,12 +389,13 @@ async def add_vaccine(
         
         saved_photo_url = f"/uploads/vaccines/{filename}"
 
-    # Cria a vacina associando ao id_number da carteirinha
+    # Instancia usando os nomes corretos dos atributos do modelo Vaccine
     new_vaccine = models.Vaccine(
         card_id=card_id,
-        vaccine_name=type.strip(),
-        application_date=date.strip(),
-        next_due_date=next_date.strip() if next_date else None,
+        pet_name=card.name or "",
+        vaccine_date=date.strip(),
+        vaccine_type=type.strip(),
+        next_date=next_date.strip() if next_date else None,
         photo_url=saved_photo_url
     )
     db.add(new_vaccine)
@@ -404,9 +405,9 @@ async def add_vaccine(
     return {
         "id": new_vaccine.id,
         "card_id": new_vaccine.card_id,
-        "date": getattr(new_vaccine, 'application_date', date),
-        "type": getattr(new_vaccine, 'vaccine_name', type),
-        "next_date": getattr(new_vaccine, 'next_due_date', next_date),
+        "date": new_vaccine.vaccine_date,
+        "type": new_vaccine.vaccine_type,
+        "next_date": new_vaccine.next_date,
         "photo_url": new_vaccine.photo_url
     }
 
