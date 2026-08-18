@@ -344,20 +344,19 @@ def create_card(card: schemas.CatCardBase, db: Session = Depends(get_db)):
 # 1. GET: Listar vacinas buscando pelo id_number do cartão
 @app.get("/api/card/{card_id}/vaccines", response_model=List[schemas.VaccineResponse])
 def get_vaccines(card_id: str, db: Session = Depends(get_db)):
-    # 1. Busca a carteirinha pelo id_number (ex: '5187-GATA')
     card = db.query(models.CatCard).filter(models.CatCard.id_number == card_id).first()
     if not card:
         raise HTTPException(status_code=404, detail="Carteirinha não encontrada")
         
-    # 2. Busca as vacinas filtrando pelo ID numérico interno do cartão (card.id)
-    vaccines = db.query(models.Vaccine).filter(models.Vaccine.card_id == card.id).order_by(models.Vaccine.id.desc()).all()
+    # Filtra as vacinas diretamente pelo id_number do cartão
+    vaccines = db.query(models.Vaccine).filter(models.Vaccine.card_id == card_id).order_by(models.Vaccine.id.desc()).all()
     
     return [
         {
             "id": v.id,
             "card_id": v.card_id,
-            "date": v.vaccine_date if hasattr(v, 'vaccine_date') else getattr(v, 'application_date', ''),
-            "type": v.vaccine_type if hasattr(v, 'vaccine_type') else getattr(v, 'vaccine_name', ''),
+            "date": getattr(v, 'vaccine_date', None) or getattr(v, 'application_date', ''),
+            "type": getattr(v, 'vaccine_type', None) or getattr(v, 'vaccine_name', ''),
             "next_date": getattr(v, 'next_date', None) or getattr(v, 'next_due_date', None),
             "photo_url": getattr(v, 'photo_url', None)
         } for v in vaccines
@@ -374,7 +373,6 @@ async def add_vaccine(
     photo: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db)
 ):
-    # 1. Busca a carteirinha pelo id_number (ex: '5187-GATA')
     card = db.query(models.CatCard).filter(models.CatCard.id_number == card_id).first()
     if not card:
         raise HTTPException(status_code=404, detail="Carteirinha não encontrada")
@@ -389,16 +387,14 @@ async def add_vaccine(
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(photo.file, buffer)
         
-        # Salva o caminho relativo da imagem
         saved_photo_url = f"/uploads/vaccines/{filename}"
 
-    # 2. Salva no banco vinculando ao card.id (inteiro)
+    # Cria a vacina associando ao id_number da carteirinha
     new_vaccine = models.Vaccine(
-        card_id=card.id,
-        pet_name=card.name,
-        vaccine_date=date.strip(),
-        vaccine_type=type.strip(),
-        next_date=next_date.strip() if next_date else None,
+        card_id=card_id,
+        vaccine_name=type.strip(),
+        application_date=date.strip(),
+        next_due_date=next_date.strip() if next_date else None,
         photo_url=saved_photo_url
     )
     db.add(new_vaccine)
@@ -408,9 +404,9 @@ async def add_vaccine(
     return {
         "id": new_vaccine.id,
         "card_id": new_vaccine.card_id,
-        "date": new_vaccine.vaccine_date,
-        "type": new_vaccine.vaccine_type,
-        "next_date": new_vaccine.next_date,
+        "date": getattr(new_vaccine, 'application_date', date),
+        "type": getattr(new_vaccine, 'vaccine_name', type),
+        "next_date": getattr(new_vaccine, 'next_due_date', next_date),
         "photo_url": new_vaccine.photo_url
     }
 
@@ -424,7 +420,7 @@ def delete_vaccine(card_id: str, vaccine_id: int, db: Session = Depends(get_db))
 
     vaccine = db.query(models.Vaccine).filter(
         models.Vaccine.id == vaccine_id, 
-        models.Vaccine.card_id == card.id
+        models.Vaccine.card_id == card_id
     ).first()
     
     if not vaccine:
@@ -442,6 +438,6 @@ def clear_vaccines(card_id: str, db: Session = Depends(get_db)):
     if not card:
         raise HTTPException(status_code=404, detail="Carteirinha não encontrada")
 
-    db.query(models.Vaccine).filter(models.Vaccine.card_id == card.id).delete()
+    db.query(models.Vaccine).filter(models.Vaccine.card_id == card_id).delete()
     db.commit()
     return {"message": "Histórico de vacinas limpo com sucesso"}
