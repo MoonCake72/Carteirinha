@@ -1,9 +1,15 @@
+// 🔒 VERIFICAÇÃO DE SEGURANÇA (Proteção de Rota)
+// Impede o carregamento da página se o usuário não tiver um token ativo
+if (!localStorage.getItem("pet_token")) {
+  window.location.href = "login.html";
+}
+
 // ------------------- CONFIGURAÇÃO DA API -------------------
 // Para testes locais com FastAPI acesse "http://127.0.0.1:8000". 
 // Em produção no Render, altere para "https://carteirinha-api.onrender.com"
 const API_BASE_URL = "https://carteirinha-api.onrender.com";
 
-// Variable global para armazenar o ID do cartão carregado
+// Variável global para armazenar o ID do cartão carregado
 let currentCardId = null;
 
 // ------------------- NAVEGAÇÃO & ROTAÇÃO 3D DO CARTÃO -------------------
@@ -263,7 +269,6 @@ function setupVaccinesSystem(cardId) {
 async function loadMyCatCard() {
   const token = localStorage.getItem("pet_token");
 
-  // Se não houver token, redireciona o usuário para a tela de login
   if (!token) {
     window.location.href = "login.html";
     return null;
@@ -279,7 +284,6 @@ async function loadMyCatCard() {
     });
 
     if (response.status === 401) {
-      // Token expirou ou é inválido
       localStorage.removeItem("pet_token");
       window.location.href = "login.html";
       return null;
@@ -289,10 +293,8 @@ async function loadMyCatCard() {
 
     const data = await response.json();
 
-    // Atualiza o ID global do cartão para as edições
     currentCardId = data.id_number;
 
-    // Preenche os campos na FRENTE do cartão
     const nameEl = document.querySelector(".cat-name");
     if (nameEl) nameEl.textContent = data.name || "Clique para editar o Nome";
 
@@ -302,7 +304,6 @@ async function loadMyCatCard() {
     const idEl = document.querySelector(".id-num");
     if (idEl) idEl.textContent = `ID Nº ${data.id_number}`;
 
-    // Helper para preencher os campos do verso
     const setFieldValue = (field, val, defaultText) => {
       const el = document.querySelector(`.editable-field[data-field="${field}"]`);
       if (el) el.textContent = val !== undefined && val !== null && val !== "" ? val : defaultText;
@@ -594,9 +595,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const cardId = await loadMyCatCard();
 
   if (cardId) {
-    // Configura o sistema de vacinas e as edições inline com o ID retornado dinamicamente
     setupVaccinesSystem(cardId);
-
     setupNameEditing(cardId);
     setupTitleEditing(cardId);
     setupBreedEditing(cardId);
