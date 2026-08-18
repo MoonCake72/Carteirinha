@@ -3,13 +3,13 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-# Conexão apontando diretamente para o banco de dados de produção no Render
+# Conexão apontando para o PostgreSQL do Supabase (porta 5432)
 SQLALCHEMY_DATABASE_URL = os.getenv(
     "DATABASE_URL", 
-    "postgresql://postgress:axQNLyuOyfrT5mFR34z30406Me8qlvTP@dpg-d9qu90p42hec73f1vcog-a.oregon-postgres.render.com/db_carteirinha_57p1"
+    "postgresql://postgres.ejxdebizhwwcppqrhujm:hawQcIRMEnETtde@aws-0-us-east-1.pooler.supabase.com:5432/postgres"
 )
 
-# Garante a compatibilidade da string com o SQLAlchemy 2.0
+# O SQLAlchemy exige o prefixo postgresql://
 if SQLALCHEMY_DATABASE_URL.startswith("postgres://"):
     SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
