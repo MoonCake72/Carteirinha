@@ -341,29 +341,28 @@ def create_card(card: schemas.CatCardBase, db: Session = Depends(get_db)):
 
 # ------------------- ROTAS DE VACINAS -------------------
 
-# 1. GET: Listar vacinas buscando pelo id_number do cartão
+# 1. GET: Listar vacinas pelo id_number do cartão
 @app.get("/api/card/{card_id}/vaccines", response_model=List[schemas.VaccineResponse])
 def get_vaccines(card_id: str, db: Session = Depends(get_db)):
     card = db.query(models.CatCard).filter(models.CatCard.id_number == card_id).first()
     if not card:
         raise HTTPException(status_code=404, detail="Carteirinha não encontrada")
         
-    # Filtra as vacinas diretamente pelo id_number do cartão
     vaccines = db.query(models.Vaccine).filter(models.Vaccine.card_id == card_id).order_by(models.Vaccine.id.desc()).all()
     
     return [
         {
             "id": v.id,
             "card_id": v.card_id,
-            "date": getattr(v, 'vaccine_date', None) or getattr(v, 'application_date', ''),
-            "type": getattr(v, 'vaccine_type', None) or getattr(v, 'vaccine_name', ''),
-            "next_date": getattr(v, 'next_date', None) or getattr(v, 'next_due_date', None),
-            "photo_url": getattr(v, 'photo_url', None)
+            "date": v.vaccine_date,
+            "type": v.vaccine_type,
+            "next_date": v.next_date,
+            "photo_url": v.photo_url
         } for v in vaccines
     ]
 
 
-# 2. POST: Adicionar vacina buscando a carteirinha pelo id_number
+# 2. POST: Adicionar vacina vinculando ao id_number
 @app.post("/api/card/{card_id}/vaccines", response_model=schemas.VaccineResponse)
 async def add_vaccine(
     card_id: str,
@@ -389,10 +388,10 @@ async def add_vaccine(
         
         saved_photo_url = f"/uploads/vaccines/{filename}"
 
-    # Instancia usando os nomes corretos dos atributos do modelo Vaccine
+    # Instancia exatamente com os atributos do seu models.py
     new_vaccine = models.Vaccine(
         card_id=card_id,
-        pet_name=card.name or "",
+        pet_name=card.name or "Pet",
         vaccine_date=date.strip(),
         vaccine_type=type.strip(),
         next_date=next_date.strip() if next_date else None,
@@ -412,7 +411,7 @@ async def add_vaccine(
     }
 
 
-# 3. Remover uma vacina específica
+# 3. DELETE: Remover uma vacina específica
 @app.delete("/api/card/{card_id}/vaccines/{vaccine_id}")
 def delete_vaccine(card_id: str, vaccine_id: int, db: Session = Depends(get_db)):
     card = db.query(models.CatCard).filter(models.CatCard.id_number == card_id).first()
@@ -432,7 +431,7 @@ def delete_vaccine(card_id: str, vaccine_id: int, db: Session = Depends(get_db))
     return {"message": "Vacina removida com sucesso"}
 
 
-# 4. Limpar todo o histórico de vacinas do pet
+# 4. DELETE: Limpar todo o histórico de vacinas
 @app.delete("/api/card/{card_id}/vaccines")
 def clear_vaccines(card_id: str, db: Session = Depends(get_db)):
     card = db.query(models.CatCard).filter(models.CatCard.id_number == card_id).first()
