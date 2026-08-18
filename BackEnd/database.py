@@ -2,15 +2,16 @@ import os
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from dotenv import load_dotenv
 
-# Conexão apontando para o PostgreSQL do Supabase (porta 5432)
-SQLALCHEMY_DATABASE_URL = os.getenv(
-    "DATABASE_URL", 
-    "postgresql://postgres.ejxdebizhwwcppqrhujm:hawQcIRMEnETtde@aws-0-us-east-1.pooler.supabase.com:5432/postgres"
-)
+# Carrega as variáveis do arquivo .env (em desenvolvimento local)
+load_dotenv()
 
-# O SQLAlchemy exige o prefixo postgresql://
-if SQLALCHEMY_DATABASE_URL.startswith("postgres://"):
+# Pega a DATABASE_URL do .env (local) ou do painel do Render (produção)
+SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL")
+
+# Tratamento para garantir compatibilidade do prefixo postgresql://
+if SQLALCHEMY_DATABASE_URL and SQLALCHEMY_DATABASE_URL.startswith("postgres://"):
     SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL)

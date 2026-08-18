@@ -25,9 +25,15 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 app = FastAPI(title="API Carteirinha")
 
 # Configuração do CORS
+origins = [
+    "https://mooncake72.github.io",  # Seu site oficial em produção
+    "http://localhost:5500",          # Testes locais (Live Server)
+    "http://127.0.0.1:5500",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
